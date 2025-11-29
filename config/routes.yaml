@@ -1,5 +1,10 @@
-controllers:
+controllersCard:
     resource:
-        path: ../src/Controller/
-        namespace: App\Controller
+        path: ../src/Example/Card/Infrastructure/Controller/
+        namespace: App\FlashCards\Card\Infrastructure\Controller
+    type: attribute
+controllersUser:
+    resource:
+        path: ../src/Example/User/Infrastructure/Controller/
+        namespace: App\FlashCards\User\Infrastructure\Controller
     type: attribute
