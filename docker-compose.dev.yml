@@ -1,0 +1,54 @@
+services:
+  php:
+    container_name: criteria_app_php_dev
+    build:
+      target: app_php_dev
+    volumes:
+      - ./public:/app/public
+      - ./config:/app/config
+      - ./migrations:/app/migrations
+      - ./src:/app/src
+      - ./fixtures:/app/fixtures
+      - ./fs:/app/fs
+      - ./var/log:/app/var/log
+      - ./templates:/app/templates
+      - ./tests:/app/tests
+      - ./translations:/app/translations
+      - ./composer.json:/app/composer.json
+      - ./composer.lock:/app/composer.lock
+      - ./symfony.lock:/app/symfony.lock
+      - ./phpunit.xml.dist:/app/phpunit.xml.dist
+      - /app/vendor
+      - ./.env:/app/.env
+      - ./.env.local:/app/.env.local
+      - ./.env.test:/app/.env.test
+      - ./docker/php/conf.d/app.dev.ini:/usr/local/etc/php/conf.d/app.dev.ini:ro
+    environment:
+      XDEBUG_MODE: "${XDEBUG_MODE:-off}"
+      TEST_DATABASE_URL: pgsql://CriteriaAppUser:user123@db:5434/CriteriaAppDatabase?serverVersion=13&charset=utf8
+      TEST_ELASTICSEARCH_INDEX_PREFIX: test_criteria_app_
+    extra_hosts:
+      - host.docker.internal:host-gateway
+  db:
+    volumes:
+      - pgdata:/var/lib/postgresql/data:rw
+  db_test:
+    image: postgres:13
+    ports:
+      - '11030:5434'
+    container_name: criteria_app_pgsql_test
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: 'CriteriaAppDatabase'
+      POSTGRES_USER: 'CriteriaAppUser'
+      POSTGRES_PASSWORD: 'user123'
+    volumes:
+      - pgdata_test:/var/lib/postgresql/data:rw
+    healthcheck:
+      test: pg_isready -d CriteriaAppDatabase -U CriteriaAppDatabase
+      interval: 10s
+      timeout: 3s
+      retries: 3
+volumes:
+  pgdata:
+  pgdata_test:
