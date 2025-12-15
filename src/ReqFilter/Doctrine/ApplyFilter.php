@@ -4,6 +4,8 @@ namespace App\ReqFilter\Doctrine;
 
 use App\ReqFilter\Contracts\FilterInterface;
 use App\ReqFilter\CriteriaApplier\CriteriaApplierInterface;
+use App\ReqFilter\CriteriaApplier\CriteriaApplierJoinInterface;
+use App\ReqFilter\CriteriaDto\Common\FilterDto;
 use App\ReqFilter\CriteriaDto\Common\Table;
 use Doctrine\DBAL\Exception;
 use Doctrine\DBAL\Query\QueryBuilder;
@@ -15,34 +17,52 @@ class ApplyFilter implements FilterInterface
 
     /**
      * @param iterable<CriteriaApplierInterface> $criterionAppliers
+     * @param iterable<CriteriaApplierJoinInterface> $criterionAppliersJoin
      */
     public function __construct(
         private EntityManagerInterface $entityManager,
         private readonly iterable $criterionAppliers,
+        private readonly iterable $criterionAppliersJoin,
     ) {
     }
 
 
     /**
+     * TODO review this method and change array on object
      * @return $this
      */
-    public function initFilter(?object $criteriasDto, Table $table, string $select = '*'): self
+    public function initFilter(?FilterDto $criteriasDto, Table $table, string $select = '*'): self
     {
         $this->qb = $this->entityManager->getConnection()->createQueryBuilder()
             ->select($select)
             ->from($table->tableName, $table->alias);
+        return $this->applyFilters($criteriasDto, $table, $select);
+    }
 
-        if (empty((array) $criteriasDto)) {
+
+    /**
+     * @param FilterDto|null $criteriasDto
+     * @param Table $table
+     * @return $this
+     * TODO added filter by join and corrected cycle
+     */
+    private function applyFilters(?FilterDto $criteriasDto, Table $table){
+        if (empty($criteriasDto->where) && empty($criteriasDto->joins) && empty($criteriasDto->pagination) && empty($criteriasDto->orderBy)) {
             return $this;
         }
 
         $countWhere = 0;
 
-        foreach ((array) $criteriasDto as $field => $criterion) {
+        foreach ($criteriasDto->where as $criterion) {
             foreach ($this->criterionAppliers as $applier) {
-                $countWhere = $applier->apply($this->qb, $table->alias, $field, $criterion, $countWhere);
+                if (!$applier instanceof CriteriaApplierInterface) {
+                    continue;
+                }
+
+                $countWhere = $applier->apply($this->qb, $table->alias, $criterion->column, $criterion, $countWhere);
             }
         }
+
 
         return $this;
     }

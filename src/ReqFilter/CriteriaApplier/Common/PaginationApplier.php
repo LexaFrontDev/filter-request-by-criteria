@@ -3,20 +3,22 @@
 namespace App\ReqFilter\CriteriaApplier\Common;
 
 use App\ReqFilter\CriteriaApplier\CriteriaApplierInterface;
+use App\ReqFilter\CriteriaDto\Common\ConditionGroup;
 use App\ReqFilter\CriteriaDto\Common\Pagination;
 use Doctrine\DBAL\Query\QueryBuilder;
 
+
 class PaginationApplier implements CriteriaApplierInterface
 {
-    public function apply(QueryBuilder $qb, string $alias, string $field, object $criterion, int $countWhere): int
+    public function apply(QueryBuilder $qb, string $alias, string $field, ConditionGroup $group, int $countWhere): int
     {
-        if ($criterion instanceof Pagination) {
-            if ($criterion->paginationEnabled) {
-                if (null !== $criterion->offset) {
-                    $qb->setFirstResult($criterion->offset);
+        if ($group->condition instanceof Pagination) {
+            if ($group->condition->paginationEnabled) {
+                if (null !== $group->condition->offset) {
+                    $qb->setFirstResult($group->condition->offset);
                 }
-                if (null !== $criterion->limit) {
-                    $qb->setMaxResults($criterion->limit);
+                if (null !== $group->condition->limit) {
+                    $qb->setMaxResults($group->condition->limit);
                 }
 
 

@@ -10,4 +10,9 @@ final class Pagination
         public readonly bool $paginationEnabled = false,
     ) {
     }
+
+
+    public static function By(?int $limit = null, ?int $offset = null, bool $paginationEnabled = false): self{
+        return new self($limit, $offset, $paginationEnabled);
+    }
 }

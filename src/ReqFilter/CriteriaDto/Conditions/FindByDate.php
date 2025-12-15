@@ -10,4 +10,8 @@ final class FindByDate
         public readonly string $YmdTimeStamp = '',
     ) {
     }
+    public static function By(string $YmdDate = '', string $YmdTime = '', string $YmdTimeStamp = ''): self
+    {
+        return new self($YmdDate, $YmdTime, $YmdTimeStamp);
+    }
 }

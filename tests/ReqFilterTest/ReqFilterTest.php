@@ -3,11 +3,12 @@
 namespace App\Tests\ReqFilterTest;
 
 use App\ReqFilter\Contracts\FilterInterface;
+use App\ReqFilter\CriteriaDto\Common\ConditionGroup;
+use App\ReqFilter\CriteriaDto\Common\FilterDto;
+use App\ReqFilter\CriteriaDto\Common\LogicOperator;
 use App\ReqFilter\CriteriaDto\Common\Pagination;
 use App\ReqFilter\CriteriaDto\Common\Table;
-use App\ReqFilter\CriteriaDto\Conditions\FindBy;
-use App\ReqFilter\CriteriaDto\Conditions\FindByBool;
-use App\ReqFilter\CriteriaDto\Conditions\FindByInt;
+use App\ReqFilter\CriteriaDto\Conditions\Criterion;
 use App\ReqFilter\CriteriaDto\Join\Join;
 use App\ReqFilter\CriteriaDto\Join\JoinType;
 use App\ReqFilter\CriteriaDto\Join\OnCondition;
@@ -26,46 +27,28 @@ class ReqFilterTest extends KernelTestCase
     public function testAAAInit()
     {
         // assert
-        $emptyDto = (object)[
-            'user_id' => new FindBy(
-                operator: '=',
-                value: 1
-            ),
-            'is_deleted' => new FindBy(
-                operator: '=',
-                value: true
-            ),
-            'title' => [
-                new FindBy(
-                    like: 'hello',
-                ),
-            ],
-            'pagination' => new Pagination(
-                limit: 50,
-                offset: true,
-                paginationEnabled: true
-            ),
-            'cardJoin' => new Join(
-                table: new Table(
-                    tableName: 'card',
-                    alias: 'cd',
-                ),
-                select: 'name',
-                joinType: JoinType::INNER,
-                onCondition: [new OnCondition(left: 'cd.list_id',  operator: '=', rightParam: 'idss')],
-                paramsJoin: ['idss' => 1],
-            ),
-        ];
+        $emptyDto =  FilterDto::Filter(
+           where: [
+               ConditionGroup::and(
+                   column: 'name', condition: Criterion::in(['Leha', 'Alisa', 'Kiril']),
+               ),
+               ConditionGroup::or(
+                    column: 'role', condition: Criterion::eq('admin'),
+               ),
+               ConditionGroup::or(
+                    column: 'role', condition: Criterion::eq('user'),
+               ),
+           ],
+           pagination: Pagination::By(50, true, true),
+           joins: null,
+           orderBy: null,
+        );
 
         // act
-        $result = $this->Filter->initFilter(criteriasDto: $emptyDto,  table: new Table(
-            tableName: 'list',
-            alias: 'l',
-        ));
+        $result = $this->Filter->initFilter(criteriasDto: $emptyDto,  table:  Table::is(tableName: 'list', alias: 'l',));
 
         dump($result->getSql());
         dump($result->getParameter());
-        var_dump($result->getSql());
         $this->assertNotNull($result->getSql());
     }
 

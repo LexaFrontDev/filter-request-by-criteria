@@ -7,6 +7,7 @@ namespace App\Example\Card\Infrastructure\Doctrine\Repository\LIst;
 use App\Example\Card\Domain\Entity\Lists;
 use App\ReqFilter\Contracts\FilterInterface;
 use App\Example\Card\Domain\Repository\List\ListInterface;
+use App\ReqFilter\CriteriaDto\Common\Table;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\DBAL\Exception;
 use Doctrine\ORM\EntityManagerInterface;
@@ -57,7 +58,7 @@ final class ListRepository extends ServiceEntityRepository implements ListInterf
     public function getListByUserId($user_id)
     {
         $dto = $this->reqFleshListMapper->toDto($user_id);
-        $req = $this->filter->initFilter(criteriasDto: $dto, tableName: 'lists', alias: 'l');
+        $req = $this->filter->initFilter(criteriasDto: $dto, table:  new Table(tableName: 'list',alias: 'l'));
         return $req->getList();
     }
 }

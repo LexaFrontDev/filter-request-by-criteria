@@ -3,17 +3,24 @@
 namespace App\ReqFilter\CriteriaApplier\Join;
 
 use App\ReqFilter\CriteriaApplier\CriteriaApplierInterface;
+use App\ReqFilter\CriteriaApplier\CriteriaApplierJoinInterface;
 use App\ReqFilter\CriteriaDto\Join\Join;
 use App\ReqFilter\CriteriaDto\Join\OnCondition;
 use Doctrine\DBAL\Query\Expression\CompositeExpression;
 use Doctrine\DBAL\Query\QueryBuilder;
-class JoinApplier implements CriteriaApplierInterface
+class JoinApplier implements CriteriaApplierJoinInterface
 {
-    public function apply(QueryBuilder $qb, string $alias, string $field, object $criterion, int $countWhere): int
+
+    /**
+     * @param QueryBuilder $qb
+     * @param string $alias
+     * @param string $field
+     * @param Join $criterion
+     * @param int $countWhere
+     * @return int
+     */
+    public function apply(QueryBuilder $qb, string $alias, string $field, Join $criterion, int $countWhere): int
     {
-        if (!$criterion instanceof Join) {
-            return $countWhere;
-        }
 
         $onExpr = $criterion->onCondition ? $this->buildOnCondition($qb, $criterion->onCondition, $criterion->paramsJoin) : '1=1';
 

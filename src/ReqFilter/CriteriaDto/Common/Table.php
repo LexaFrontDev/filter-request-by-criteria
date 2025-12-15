@@ -11,4 +11,10 @@ final class Table
     ){}
 
 
+    public static function is(string $tableName, string $alias): self
+    {
+        return new self($tableName, $alias);
+    }
+
+
 }
