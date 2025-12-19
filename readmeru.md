@@ -1,18 +1,16 @@
-# Request Filter Library (DTO-based)
+# Библиотека фильтров запросов (DTO-based)
 
-This library provides a way to build strongly typed and structured requests using DTOs. It allows filtering, pagination, joins, and ordering in a clean and reusable way.
+Эта библиотека позволяет строить **типизированные и структурированные запросы** через DTO. Поддерживаются фильтры, пагинация, связи (joins) и сортировка.
 
-Link on the Russian version  [Russian version](./readmeru.md)
-
-
+Ссылка на английскую версию: [English version](./readme.md)
 
 ---
 
 ## 1. FilterDto
 
-`FilterDto` is the main DTO for building requests. It represents the request structure and ensures type safety.
+`FilterDto`  основной DTO для построения запросов. Он представляет структуру запроса и обеспечивает строгую типизацию.
 
-### Constructor
+### Конструктор
 
 ```php
 public function __construct(
@@ -23,12 +21,12 @@ public function __construct(
 )
 ```
 
-* `where`: array of `ConditionGroup`  conditions for filtering
-* `pagination`: `Pagination|null`  pagination settings
-* `joins`: array|null  join definitions
-* `orderBy`: `OrderBy|null`  ordering of results
+* `where`: массив `ConditionGroup`  условия фильтрации
+* `pagination`: `Pagination|null`  настройки пагинации
+* `joins`: массив|null связи с другими таблицами
+* `orderBy`: `OrderBy|null` сортировка результатов
 
-### Static factory method
+### Статический метод фабрики
 
 ```php
 public static function Filter(?array $where, ?Pagination $pagination, ?array $joins = null, ?OrderBy $orderBy = null): self
@@ -36,7 +34,7 @@ public static function Filter(?array $where, ?Pagination $pagination, ?array $jo
 
 ---
 
-### Example usage
+### Пример использования
 
 ```php
 use App\ReqFilter\CriteriaDto\Common\FilterDto;
@@ -59,9 +57,9 @@ $filter = FilterDto::Filter(
 
 ## 2. ConditionGroup
 
-`ConditionGroup` defines a single condition in a filter. It supports logical operators AND and OR.
+`ConditionGroup` определяет одно условие фильтра. Поддерживаются логические операторы AND и OR.
 
-### Constructor
+### Конструктор
 
 ```php
 public function __construct(
@@ -71,19 +69,19 @@ public function __construct(
 )
 ```
 
-### Static methods
+### Статические методы
 
 ```php
 ConditionGroup::and(string $column, Criterion|FindByDate $condition): self
 ConditionGroup::or(string $column, Criterion|FindByDate $condition): self
 ```
 
-* `and()`  builds a condition with AND logic
-* `or()`  builds a condition with OR logic
+* `and()` - строит условие с логикой AND
+* `or()` - строит условие с логикой OR
 
 ---
 
-### Example
+### Пример
 
 ```php
 ConditionGroup::and('name', Criterion::in(['Leha', 'Alisa']));
@@ -94,9 +92,9 @@ ConditionGroup::or('role', Criterion::eq('admin'));
 
 ## 3. Criterion
 
-`Criterion` defines a condition operator for filtering (e.g., `=`, `IN`, `LIKE`).
+`Criterion` задаёт оператор условия фильтрации (`=`, `IN`, `LIKE` и др.).
 
-### Example methods
+### Примеры методов
 
 ```php
 Criterion::eq($value)      // =
@@ -115,7 +113,7 @@ Criterion::notLike($value) // NOT LIKE
 
 ## 4. Pagination, Join, OrderBy
 
-These are optional properties for advanced queries:
+Дополнительные свойства для расширенных запросов:
 
 ```php
 $filter = FilterDto::Filter(

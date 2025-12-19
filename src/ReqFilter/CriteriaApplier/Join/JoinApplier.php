@@ -4,81 +4,61 @@ namespace App\ReqFilter\CriteriaApplier\Join;
 
 use App\ReqFilter\CriteriaApplier\CriteriaApplierInterface;
 use App\ReqFilter\CriteriaApplier\CriteriaApplierJoinInterface;
+use App\ReqFilter\CriteriaDto\Common\LogicOperator;
+use App\ReqFilter\CriteriaDto\Conditions\ComparisonOperator;
 use App\ReqFilter\CriteriaDto\Join\Join;
+use App\ReqFilter\CriteriaDto\Join\JoinType;
 use App\ReqFilter\CriteriaDto\Join\OnCondition;
 use Doctrine\DBAL\Query\Expression\CompositeExpression;
 use Doctrine\DBAL\Query\QueryBuilder;
 class JoinApplier implements CriteriaApplierJoinInterface
 {
 
-    /**
-     * @param QueryBuilder $qb
-     * @param string $alias
-     * @param string $field
-     * @param Join $criterion
-     * @param int $countWhere
-     * @return int
-     */
-    public function apply(QueryBuilder $qb, string $alias, string $field, Join $criterion, int $countWhere): int
+    public function apply(QueryBuilder $qb, string $alias, Join $criterion, int $countWhere): int
     {
+        $onExpr = $this->buildOnCondition($qb, $criterion->on, $criterion->table->alias);
 
-        $onExpr = $criterion->onCondition ? $this->buildOnCondition($qb, $criterion->onCondition, $criterion->paramsJoin) : '1=1';
+        match ($criterion->joinType) {
+            JoinType::LEFT  => $qb->leftJoin($alias, $criterion->table->tableName, $criterion->table->alias, $onExpr),
+            JoinType::RIGHT => $qb->rightJoin($alias, $criterion->table->tableName, $criterion->table->alias, $onExpr),
+            default         => $qb->innerJoin($alias, $criterion->table->tableName, $criterion->table->alias, $onExpr),
+        };
 
-        $joinType = strtoupper($criterion->joinType ?? 'INNER');
-        switch ($joinType) {
-            case 'LEFT':
-                $qb->leftJoin($alias, $criterion->table->tableName, $criterion->table->alias, $onExpr);
-                break;
-            case 'RIGHT':
-                $qb->rightJoin($alias, $criterion->table->tableName, $criterion->table->alias, $onExpr);
-                break;
-            default:
-                $qb->innerJoin($alias, $criterion->table->tableName, $criterion->table->alias, $onExpr);
-        }
-
-        foreach ((array) $criterion->select as $f) {
-            $qb->addSelect("{$criterion->table->alias}.$f");
+        foreach ((array) $criterion->select as $field) {
+            $qb->addSelect("{$criterion->table->alias}.{$field}");
         }
 
         return $countWhere;
     }
 
+
     /**
      * @param OnCondition[] $conditions
-     * @param array<string, mixed> $params
      */
-    private function buildOnCondition(QueryBuilder $qb, array $conditions, array $params): CompositeExpression|string
-    {
-        $onExpr = null;
+    private function buildOnCondition(QueryBuilder $qb, array $conditions, string $joinAlias): string {
+        if ($conditions === []) return '1=1';
+        $expr = null;
+        $i = 0;
+        foreach ($conditions as $condition) {
+            $param = sprintf('join_%s_%d', $joinAlias, $i++);
+            $current = match ($condition->operator) {
+                ComparisonOperator::IN,
+                ComparisonOperator::NOT_IN => sprintf('%s.%s %s (:%s)', $joinAlias, $condition->column, $condition->operator->value, $param),
+                default => sprintf('%s.%s %s :%s', $joinAlias, $condition->column, $condition->operator->value, $param),
+            };
 
-        foreach ($conditions as $cond) {
-            if ($cond->isRawExpr()) {
-                $current = $cond->expr;
-            } else {
-                if (null !== $cond->rightParam) {
-                    $placeholder = ':'.$cond->rightParam;
-                    $current = $qb->expr()->comparison($cond->left, $cond->operator ?? '=', $placeholder);
+            // bind
+            $qb->setParameter($param, $condition->operator === ComparisonOperator::LIKE || $condition->operator === ComparisonOperator::NOT_LIKE ? '%' . $condition->value . '%' : $condition->value);
 
-                    if (array_key_exists($cond->rightParam, $params)) {
-                        $qb->setParameter($cond->rightParam, $params[$cond->rightParam]);
-                    }
-                } else {
-                    $current = $qb->expr()->comparison($cond->left, $cond->operator ?? '=', $cond->right);
-                }
+            if ($expr === null) {
+                $expr = $current;
+                continue;
             }
 
-            if (null === $onExpr) {
-                $onExpr = $current;
-            } else {
-                $onExpr = new CompositeExpression(
-                    'OR' === strtoupper($cond->type)
-                        ? CompositeExpression::TYPE_OR
-                        : CompositeExpression::TYPE_AND,
-                    [$onExpr, $current]
-                );
-            }
+            $expr = $condition->logic === LogicOperator::OR ? "($expr OR $current)" : "($expr AND $current)";
         }
 
-        return $onExpr ?? '1=1';
+        return $expr;
     }
+
 }

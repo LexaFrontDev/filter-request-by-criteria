@@ -8,19 +8,19 @@ use App\ReqFilter\CriteriaDto\Conditions\FindByDate;
 final class ConditionGroup
 {
     public function __construct(
-        public readonly string                          $column,
-        public readonly Criterion|FindByDate|Pagination $condition,
-        public readonly string                          $LogicOperator = LogicOperator::or
+        public readonly string  $column,
+        public readonly Criterion|FindByDate $condition,
+        public readonly LogicOperator $LogicOperator = LogicOperator::OR
     ){}
 
-    public static function and(string $column, Criterion|FindByDate|Pagination $condition): self
+    public static function and(string $column, Criterion|FindByDate $condition): self
     {
-      return  new self(column: $column, condition: $condition, LogicOperator: LogicOperator::and);
+      return  new self(column: $column, condition: $condition, LogicOperator: LogicOperator::AND);
     }
 
 
-    public static function or(string $column, Criterion|FindByDate|Pagination $condition): self
+    public static function or(string $column, Criterion|FindByDate $condition): self
     {
-        return  new self(column: $column, condition: $condition, LogicOperator: LogicOperator::or);
+        return  new self(column: $column, condition: $condition, LogicOperator: LogicOperator::OR);
     }
 }

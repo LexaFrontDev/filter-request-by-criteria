@@ -29,18 +29,22 @@ class ReqFilterTest extends KernelTestCase
         // assert
         $emptyDto =  FilterDto::Filter(
            where: [
-               ConditionGroup::and(
-                   column: 'name', condition: Criterion::in(['Leha', 'Alisa', 'Kiril']),
-               ),
-               ConditionGroup::or(
-                    column: 'role', condition: Criterion::eq('admin'),
-               ),
-               ConditionGroup::or(
-                    column: 'role', condition: Criterion::eq('user'),
-               ),
+               ConditionGroup::and(column: 'name', condition: Criterion::in(['Leha', 'Alisa', 'Kiril']),),
+               ConditionGroup::or(column: 'role', condition: Criterion::eq('admin'),),
+               ConditionGroup::or(column: 'role', condition: Criterion::eq('user'),),
            ],
            pagination: Pagination::By(50, true, true),
-           joins: null,
+           joins: [
+                $join = Join::make(
+                    table: Table::is('card', 'cd'),
+                    select: ['name'],
+                    joinType: JoinType::INNER,
+                    on: [
+                       OnCondition::eq('list_id', 1, LogicOperator::OR),
+                       OnCondition::eq('list_id', 2, LogicOperator::OR)
+                    ],
+                )
+          ],
            orderBy: null,
         );
 

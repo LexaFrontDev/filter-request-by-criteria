@@ -2,20 +2,20 @@
 
 namespace App\ReqFilter\CriteriaDto\Conditions;
 
-final class ComparisonOperator
+enum ComparisonOperator: string
 {
-    public const EQUAL = '=';
-    public const NOT_EQUAL = '<>';
+    case EQUAL = '=';
+    case NOT_EQUAL = '<>';
 
-    public const GREATER = '>';
-    public const GREATER_EQUAL = '>=';
+    case GREATER = '>';
+    case GREATER_EQUAL = '>=';
 
-    public const LESS = '<';
-    public const LESS_EQUAL = '<=';
+    case LESS = '<';
+    case LESS_EQUAL = '<=';
 
-    public const IN = 'IN';
-    public const NOT_IN = 'NOT IN';
+    case IN = 'IN';
+    case NOT_IN = 'NOT IN';
 
-    public const LIKE = 'LIKE';
-    public const NOT_LIKE = 'NOT LIKE';
+    case LIKE = 'LIKE';
+    case NOT_LIKE = 'NOT LIKE';
 }

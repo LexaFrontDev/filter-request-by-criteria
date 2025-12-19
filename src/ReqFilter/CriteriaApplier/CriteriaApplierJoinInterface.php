@@ -12,12 +12,11 @@ interface CriteriaApplierJoinInterface
     /**
      * @param QueryBuilder $qb
      * @param string $alias
-     * @param string $field
      * @param Join $criterion
      * @param int $countWhere
      * @return int
      */
-    public function apply(QueryBuilder $qb, string $alias, string $field, Join $criterion, int $countWhere): int;
+    public function apply(QueryBuilder $qb, string $alias,  Join $criterion, int $countWhere): int;
 
 
 

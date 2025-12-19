@@ -5,7 +5,7 @@ namespace App\ReqFilter\CriteriaDto\Conditions;
 final class Criterion
 {
     private function __construct(
-        public readonly string $operator,
+        public readonly ComparisonOperator $operator,
         public readonly mixed $value
     ) {}
 

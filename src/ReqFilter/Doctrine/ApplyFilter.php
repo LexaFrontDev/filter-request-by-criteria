@@ -63,6 +63,16 @@ class ApplyFilter implements FilterInterface
             }
         }
 
+        foreach ($criteriasDto->joins as $criterion) {
+            foreach ($this->criterionAppliersJoin as $applier) {
+                if (!$applier instanceof CriteriaApplierJoinInterface) {
+                    continue;
+                }
+
+                $countWhere = $applier->apply($this->qb, $table->alias,  $criterion, $countWhere);
+            }
+        }
+
 
         return $this;
     }

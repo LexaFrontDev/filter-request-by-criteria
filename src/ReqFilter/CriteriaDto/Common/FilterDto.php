@@ -4,9 +4,10 @@ namespace App\ReqFilter\CriteriaDto\Common;
 
 
 
-class FilterDto {
+final class FilterDto {
         /**
          * @param ConditionGroup[] $where
+         * @param Pagination|null $pagination
          * @param array|null $joins
          * @param OrderBy|null $orderBy
          */

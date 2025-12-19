@@ -2,8 +2,8 @@
 
 namespace App\ReqFilter\CriteriaDto\Common;
 
-final class LogicOperator
+enum LogicOperator: string
 {
-    const or = 'or';
-    const and = 'and';
+    case OR = 'or';
+    case AND = 'and';
 }

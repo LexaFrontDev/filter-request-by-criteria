@@ -22,13 +22,13 @@ final class CriterionApplier implements CriteriaApplierInterface
 
         $expr = match ($criterion->operator) {
             ComparisonOperator::IN,
-            ComparisonOperator::NOT_IN => sprintf('%s.%s %s (:%s)', $alias, $field, $criterion->operator, $paramName),
+            ComparisonOperator::NOT_IN => sprintf('%s.%s %s (:%s)', $alias, $field, $criterion->operator->value, $paramName),
             ComparisonOperator::LIKE,
-            ComparisonOperator::NOT_LIKE => sprintf('%s.%s %s :%s', $alias, $field, $criterion->operator, $paramName),
-            default => sprintf('%s.%s %s :%s', $alias, $field, $criterion->operator, $paramName),
+            ComparisonOperator::NOT_LIKE => sprintf('%s.%s %s :%s', $alias, $field, $criterion->operator->value, $paramName),
+            default => sprintf('%s.%s %s :%s', $alias, $field, $criterion->operator->value, $paramName),
         };
 
-        $this->addWhere($qb, $expr, $group->LogicOperator, $countWhere);
+        $this->addWhere($qb, $expr, $group->LogicOperator->value, $countWhere);
         $this->bindValue($qb, $paramName, $criterion);
         return $countWhere + 1;
     }
@@ -38,7 +38,7 @@ final class CriterionApplier implements CriteriaApplierInterface
             $qb->where($expr);
             return;
         }
-        $logic === LogicOperator::or ? $qb->orWhere($expr) : $qb->andWhere($expr);
+        $logic === LogicOperator::OR ? $qb->orWhere($expr) : $qb->andWhere($expr);
     }
 
     private function bindValue(QueryBuilder $qb, string $paramName, Criterion $criterion): void {
