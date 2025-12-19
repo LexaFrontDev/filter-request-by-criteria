@@ -1,4 +1,4 @@
-# Request Filter Library (DTO-based)
+Request Filter Library (DTO-based) — currently in development
 
 This library provides a way to build strongly typed and structured requests using DTOs. It allows filtering, pagination, joins, and ordering in a clean and reusable way.
 
