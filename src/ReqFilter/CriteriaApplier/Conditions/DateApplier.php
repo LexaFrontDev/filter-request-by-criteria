@@ -3,76 +3,79 @@
 namespace App\ReqFilter\CriteriaApplier\Conditions;
 
 use App\ReqFilter\CriteriaApplier\CriteriaApplierInterface;
+use App\ReqFilter\CriteriaDto\Common\ConditionGroup;
+use App\ReqFilter\CriteriaDto\Common\FilterDto;
 use App\ReqFilter\CriteriaDto\Conditions\FindByDate;
 use Psr\Log\LoggerInterface;
 use Doctrine\DBAL\Query\QueryBuilder;
 
-class DateApplier implements CriteriaApplierInterface
+final class DateApplier implements CriteriaApplierInterface
 {
     public function __construct(
         private LoggerInterface $logger,
-    ) {
-    }
+    ) {}
 
-    public function apply(QueryBuilder $qb, string $alias, string $field, object $criterion, int $countWhere): int
+    public function apply(QueryBuilder $qb, string $alias, FilterDto $dto, int $countWhere): int
     {
-        if (!($criterion instanceof FindByDate)) {
-            return $countWhere;
-        }
+        foreach ($dto->where as $group) {
+            if (!$group instanceof ConditionGroup) continue;
 
-        $conditions = [];
+            foreach ($group->conditions as $i => $condition) {
+                if (!$condition instanceof FindByDate) continue;
 
-        if (!empty($criterion->YmdDate)) {
-            try {
-                $date = new \DateTimeImmutable($criterion->YmdDate);
-                $conditions[] = [
-                    'expr' => "$alias.$field = :{$field}_date",
-                    'param' => "{$field}_date",
-                    'value' => $date->format('Y-m-d'),
-                ];
-            } catch (\Exception $e) {
-                $this->logger->error($e->getMessage());
+                $params = [];
+
+                if (!empty($condition->YmdDate)) {
+                    try {
+                        $d = new \DateTimeImmutable($condition->YmdDate);
+                        $params[] = [
+                            'expr' => sprintf('%s.%s = :%s', $alias, $group->column, "{$group->column}_date_{$i}"),
+                            'param' => "{$group->column}_date_{$i}",
+                            'value' => $d->format('Y-m-d'),
+                        ];
+                    } catch (\Exception $e) {
+                        $this->logger->error($e->getMessage());
+                    }
+                }
+
+                if (!empty($condition->YmdTime)) {
+                    try {
+                        $dt = new \DateTimeImmutable($condition->YmdTime);
+                        $params[] = [
+                            'expr' => sprintf('%s.%s = :%s', $alias, $group->column, "{$group->column}_datetime_{$i}"),
+                            'param' => "{$group->column}_datetime_{$i}",
+                            'value' => $dt->format('Y-m-d H:i:s'),
+                        ];
+                    } catch (\Exception $e) {
+                        $this->logger->error($e->getMessage());
+                    }
+                }
+
+                if (!empty($condition->YmdTimeStamp)) {
+                    try {
+                        $ts = (new \DateTimeImmutable())->setTimestamp((int)$condition->YmdTimeStamp);
+                        $params[] = [
+                            'expr' => sprintf('%s.%s = :%s', $alias, $group->column, "{$group->column}_ts_{$i}"),
+                            'param' => "{$group->column}_ts_{$i}",
+                            'value' => $ts->format('Y-m-d H:i:s'),
+                        ];
+                    } catch (\Exception $e) {
+                        $this->logger->error($e->getMessage());
+                    }
+                }
+
+                foreach ($params as $param) {
+                    if ($countWhere === 0) {
+                        $qb->where($param['expr']);
+                    } else {
+                        $qb->andWhere($param['expr']);
+                    }
+                    $qb->setParameter($param['param'], $param['value']);
+                    $countWhere++;
+                }
             }
-        }
-
-        if (!empty($criterion->YmdTime)) {
-            try {
-                $dateTime = new \DateTimeImmutable($criterion->YmdTime);
-                $conditions[] = [
-                    'expr' => "$alias.$field = :{$field}_datetime",
-                    'param' => "{$field}_datetime",
-                    'value' => $dateTime->format('Y-m-d H:i:s'),
-                ];
-            } catch (\Exception $e) {
-                $this->logger->error($e->getMessage());
-            }
-        }
-
-        if (!empty($criterion->YmdTimeStamp)) {
-            try {
-                $dateFromTs = (new \DateTimeImmutable())->setTimestamp((int) $criterion->YmdTimeStamp);
-                $conditions[] = [
-                    'expr' => "$alias.$field = :{$field}_ts",
-                    'param' => "{$field}_ts",
-                    'value' => $dateFromTs->format('Y-m-d H:i:s'),
-                ];
-            } catch (\Exception $e) {
-                $this->logger->error($e->getMessage());
-            }
-        }
-
-        foreach ($conditions as $cond) {
-            if (0 === $countWhere) {
-                $qb->where($cond['expr']);
-            } else {
-                $qb->andWhere($cond['expr']);
-            }
-            $qb->setParameter($cond['param'], $cond['value']);
-            ++$countWhere;
         }
 
         return $countWhere;
     }
-
-
 }

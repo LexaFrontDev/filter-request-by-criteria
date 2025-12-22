@@ -7,20 +7,22 @@ use App\ReqFilter\CriteriaDto\Conditions\FindByDate;
 
 final class ConditionGroup
 {
+    /**
+     * @param list<Criterion|FindByDate> $conditions
+     */
     public function __construct(
-        public readonly string  $column,
-        public readonly Criterion|FindByDate $condition,
-        public readonly LogicOperator $LogicOperator = LogicOperator::OR
-    ){}
+        public readonly string $column,
+        public readonly array $conditions,
+        public readonly LogicOperator $logic = LogicOperator::OR
+    ) {}
 
-    public static function and(string $column, Criterion|FindByDate $condition): self
+    public static function and(string $column, Criterion|FindByDate ...$conditions): self
     {
-      return  new self(column: $column, condition: $condition, LogicOperator: LogicOperator::AND);
+        return new self($column, $conditions, LogicOperator::AND);
     }
 
-
-    public static function or(string $column, Criterion|FindByDate $condition): self
+    public static function or(string $column, Criterion|FindByDate ...$conditions): self
     {
-        return  new self(column: $column, condition: $condition, LogicOperator: LogicOperator::OR);
+        return new self($column, $conditions, LogicOperator::OR);
     }
 }

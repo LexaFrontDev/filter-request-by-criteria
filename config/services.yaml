@@ -15,7 +15,7 @@ services:
 
     App\ReqFilter\CriteriaApplier\:
         resource: '../src/ReqFilter/CriteriaApplier'
-        tags: [ 'app.criterion_applier', 'app.criterion_applier_join' ]
+        tags: [ 'app.criterion_applier']
         autoconfigure: true
         autowire: true
 
@@ -25,5 +25,3 @@ services:
     App\ReqFilter\Doctrine\ApplyFilter:
         arguments:
                 $criterionAppliers: !tagged_iterator app.criterion_applier
-                $criterionAppliersJoin: !tagged_iterator app.criterion_applier_join
-

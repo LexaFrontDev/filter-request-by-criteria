@@ -3,7 +3,7 @@
 namespace App\ReqFilter\CriteriaApplier\Join;
 
 use App\ReqFilter\CriteriaApplier\CriteriaApplierInterface;
-use App\ReqFilter\CriteriaApplier\CriteriaApplierJoinInterface;
+use App\ReqFilter\CriteriaDto\Common\FilterDto;
 use App\ReqFilter\CriteriaDto\Common\LogicOperator;
 use App\ReqFilter\CriteriaDto\Conditions\ComparisonOperator;
 use App\ReqFilter\CriteriaDto\Join\Join;
@@ -11,22 +11,27 @@ use App\ReqFilter\CriteriaDto\Join\JoinType;
 use App\ReqFilter\CriteriaDto\Join\OnCondition;
 use Doctrine\DBAL\Query\Expression\CompositeExpression;
 use Doctrine\DBAL\Query\QueryBuilder;
-class JoinApplier implements CriteriaApplierJoinInterface
+class JoinApplier implements CriteriaApplierInterface
 {
 
-    public function apply(QueryBuilder $qb, string $alias, Join $criterion, int $countWhere): int
+    public function apply(QueryBuilder $qb, string $alias, FilterDto $condition, int $countWhere): int
     {
-        $onExpr = $this->buildOnCondition($qb, $criterion->on, $criterion->table->alias);
+        foreach ($condition->joins as $join)
+        {
+            $onExpr = $this->buildOnCondition($qb, $join->on, $join->table->alias);
 
-        match ($criterion->joinType) {
-            JoinType::LEFT  => $qb->leftJoin($alias, $criterion->table->tableName, $criterion->table->alias, $onExpr),
-            JoinType::RIGHT => $qb->rightJoin($alias, $criterion->table->tableName, $criterion->table->alias, $onExpr),
-            default         => $qb->innerJoin($alias, $criterion->table->tableName, $criterion->table->alias, $onExpr),
-        };
+            match ($join->joinType) {
+                JoinType::LEFT  => $qb->leftJoin($alias, $join->table->tableName, $join->table->alias, $onExpr),
+                JoinType::RIGHT => $qb->rightJoin($alias, $join->table->tableName, $join->table->alias, $onExpr),
+                default         => $qb->innerJoin($alias, $join->table->tableName, $join->table->alias, $onExpr),
+            };
 
-        foreach ((array) $criterion->select as $field) {
-            $qb->addSelect("{$criterion->table->alias}.{$field}");
+            foreach ((array) $join->select as $field) {
+                $qb->addSelect("{$join->table->alias}.{$field}");
+            }
+            $countWhere++;
         }
+
 
         return $countWhere;
     }

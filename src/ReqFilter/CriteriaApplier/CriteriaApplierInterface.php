@@ -11,10 +11,9 @@ interface CriteriaApplierInterface
     /**
      * @param QueryBuilder $qb
      * @param string $alias
-     * @param string $field
-     * @param ConditionGroup $group
+     * @param FilterDto $dto
      * @param int $countWhere
      * @return int
      */
-    public function apply(QueryBuilder $qb, string $alias, string $field, ConditionGroup $group, int $countWhere): int;
+    public function apply(QueryBuilder $qb, string $alias,  FilterDto $dto, int $countWhere): int;
 }

@@ -3,6 +3,7 @@
 namespace App\ReqFilter\Doctrine;
 
 use App\ReqFilter\Contracts\FilterInterface;
+use App\ReqFilter\CriteriaApplier\ApplicatorInitializerInterface;
 use App\ReqFilter\CriteriaApplier\CriteriaApplierInterface;
 use App\ReqFilter\CriteriaApplier\CriteriaApplierJoinInterface;
 use App\ReqFilter\CriteriaDto\Common\FilterDto;
@@ -17,12 +18,10 @@ class ApplyFilter implements FilterInterface
 
     /**
      * @param iterable<CriteriaApplierInterface> $criterionAppliers
-     * @param iterable<CriteriaApplierJoinInterface> $criterionAppliersJoin
      */
     public function __construct(
         private EntityManagerInterface $entityManager,
         private readonly iterable $criterionAppliers,
-        private readonly iterable $criterionAppliersJoin,
     ) {
     }
 
@@ -53,26 +52,9 @@ class ApplyFilter implements FilterInterface
 
         $countWhere = 0;
 
-        foreach ($criteriasDto->where as $criterion) {
-            foreach ($this->criterionAppliers as $applier) {
-                if (!$applier instanceof CriteriaApplierInterface) {
-                    continue;
-                }
-
-                $countWhere = $applier->apply($this->qb, $table->alias, $criterion->column, $criterion, $countWhere);
-            }
+        foreach ($this->criterionAppliers as $applier) {
+            $countWhere = $applier->apply($this->qb, $table->alias, $criteriasDto, $countWhere);
         }
-
-        foreach ($criteriasDto->joins as $criterion) {
-            foreach ($this->criterionAppliersJoin as $applier) {
-                if (!$applier instanceof CriteriaApplierJoinInterface) {
-                    continue;
-                }
-
-                $countWhere = $applier->apply($this->qb, $table->alias,  $criterion, $countWhere);
-            }
-        }
-
 
         return $this;
     }

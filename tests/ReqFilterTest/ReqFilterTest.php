@@ -6,9 +6,11 @@ use App\ReqFilter\Contracts\FilterInterface;
 use App\ReqFilter\CriteriaDto\Common\ConditionGroup;
 use App\ReqFilter\CriteriaDto\Common\FilterDto;
 use App\ReqFilter\CriteriaDto\Common\LogicOperator;
+use App\ReqFilter\CriteriaDto\Common\OrderBy;
 use App\ReqFilter\CriteriaDto\Common\Pagination;
 use App\ReqFilter\CriteriaDto\Common\Table;
 use App\ReqFilter\CriteriaDto\Conditions\Criterion;
+use App\ReqFilter\CriteriaDto\Conditions\FindByDate;
 use App\ReqFilter\CriteriaDto\Join\Join;
 use App\ReqFilter\CriteriaDto\Join\JoinType;
 use App\ReqFilter\CriteriaDto\Join\OnCondition;
@@ -30,12 +32,22 @@ class ReqFilterTest extends KernelTestCase
         $emptyDto =  FilterDto::Filter(
            where: [
                ConditionGroup::and(column: 'name', condition: Criterion::in(['Leha', 'Alisa', 'Kiril']),),
-               ConditionGroup::or(column: 'role', condition: Criterion::eq('admin'),),
-               ConditionGroup::or(column: 'role', condition: Criterion::eq('user'),),
-           ],
+               ConditionGroup::and(column: 'name', condition: Criterion::in(['Leha', 'Alisa', 'Kiril']),),
+               ConditionGroup::or(
+                    'role',
+                     Criterion::eq('admin'),
+                     Criterion::eq('user'),
+                     Criterion::eq('manager')
+               ),
+               ConditionGroup::or(
+                    'date',
+                    FindByDate::By(YmdDate: '2025251'),
+                    FindByDate::By(YmdDate: '2025261'),
+                    FindByDate::By(YmdDate: '2025271'),
+               ),],
            pagination: Pagination::By(50, true, true),
            joins: [
-                $join = Join::make(
+                Join::make(
                     table: Table::is('card', 'cd'),
                     select: ['name'],
                     joinType: JoinType::INNER,
@@ -45,7 +57,7 @@ class ReqFilterTest extends KernelTestCase
                     ],
                 )
           ],
-           orderBy: null,
+           orderBy: new OrderBy('name',  'desc'),
         );
 
         // act
