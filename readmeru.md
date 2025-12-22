@@ -1,14 +1,53 @@
-# Библиотека фильтров запросов (DTO-based) пока в разработке
+# DTO-based библиотека фильтрации запросов *(WIP)*
 
-Эта библиотека позволяет строить **типизированные и структурированные запросы** через DTO. Поддерживаются фильтры, пагинация, связи (joins) и сортировка.
+Данная библиотека предназначена для построения **типизированных, расширяемых и безопасных SQL-запросов** с использованием DTO.
+Поддерживаемый функционал:
 
-Ссылка на английскую версию: [English version](./readme.md)
+* фильтрация (`WHERE`)
+* логические группы (`AND`, `OR`)
+* пагинация
+* `JOIN`
+* сортировка (`ORDER BY`)
+
+Английская версия: [English version](./readme.md)
 
 ---
 
-## 1. FilterDto
+## Общая концепция
 
-`FilterDto`  основной DTO для построения запросов. Он представляет структуру запроса и обеспечивает строгую типизацию.
+Библиотека исключает прямое формирование SQL-запросов и использование неструктурированных массивов.
+Запрос описывается **декларативно** с помощью DTO, после чего библиотека:
+
+* валидирует структуру запроса
+* обеспечивает строгую типизацию
+* формирует корректный `QueryBuilder`
+
+Данный подход упрощает сопровождение кода и снижает количество ошибок на уровне запросов.
+
+---
+
+## 1. Подключение фильтрации
+
+Для применения фильтрации репозиторий должен зависеть от контракта `FilterInterface`.
+
+### Пример внедрения зависимости
+
+```php
+class SomeRepository
+{
+    public function __construct(
+        private readonly FilterInterface $filter
+    ) {}
+}
+```
+
+Репозиторий не содержит логики построения SQL-запросов и работает исключительно через контракт.
+
+---
+
+## 2. FilterDto — корневой DTO запроса
+
+`FilterDto` является основным объектом, описывающим структуру запроса.
 
 ### Конструктор
 
@@ -21,20 +60,38 @@ public function __construct(
 )
 ```
 
-* `where`: массив `ConditionGroup`  условия фильтрации
-* `pagination`: `Pagination|null`  настройки пагинации
-* `joins`: массив|null связи с другими таблицами
-* `orderBy`: `OrderBy|null` сортировка результатов
+### Описание полей
 
-### Статический метод фабрики
+| Поле         | Тип                      | Описание              |
+| ------------ | ------------------------ | --------------------- |
+| `where`      | `ConditionGroup[]\|null` | Условия фильтрации    |
+| `pagination` | `Pagination\|null`       | Параметры пагинации   |
+| `joins`      | `Join[]\|null`           | Описания JOIN         |
+| `orderBy`    | `OrderBy\|null`          | Сортировка результата |
+
+---
+
+### Фабричный метод (рекомендуется)
+
+Для повышения читаемости кода рекомендуется использовать статический фабричный метод:
 
 ```php
-public static function Filter(?array $where, ?Pagination $pagination, ?array $joins = null, ?OrderBy $orderBy = null): self
+public static function Filter(
+    ?array $where,
+    ?Pagination $pagination,
+    ?array $joins = null,
+    ?OrderBy $orderBy = null
+): self
 ```
 
 ---
 
-### Пример использования
+## 3. Пример базового фильтра
+
+Запрос выполняет следующие условия:
+
+* `name IN (...)`
+* пользователь имеет роль `admin` **или** `user`
 
 ```php
 use App\ReqFilter\CriteriaDto\Common\FilterDto;
@@ -43,21 +100,53 @@ use App\ReqFilter\CriteriaDto\Conditions\Criterion;
 
 $filter = FilterDto::Filter(
     where: [
-        ConditionGroup::and('name', Criterion::in(['Leha', 'Alisa', 'Kiril'])),
-        ConditionGroup::or('role', Criterion::eq('admin')),
-        ConditionGroup::or('role', Criterion::eq('user')),
+        ConditionGroup::and(
+            'name',
+            Criterion::in(['Leha', 'Alisa', 'Kiril'])
+        ),
+        ConditionGroup::or(
+            'role',
+            Criterion::eq('admin'),
+            Criterion::eq('user')
+        ),
     ],
-    pagination: null,
-    joins: null,
-    orderBy: null
+    pagination: null
 );
 ```
 
+### Примечания
+
+* `ConditionGroup::and()` формирует условие с логическим оператором `AND`
+* `ConditionGroup::or()` формирует условие с логическим оператором `OR`
+* каждый `ConditionGroup` содержит один или несколько `Criterion`
+
 ---
 
-## 2. ConditionGroup
+## 4. Применение фильтра
 
-`ConditionGroup` определяет одно условие фильтра. Поддерживаются логические операторы AND и OR.
+После формирования `FilterDto` используется метод `initFilter`.
+
+```php
+$result = $this->filter->initFilter(
+    criteriasDto: $filter,
+    table: Table::is(
+        tableName: 'list',
+        alias: 'l'
+    )
+);
+```
+
+`Table` определяет:
+
+* основную таблицу
+* алиас таблицы
+* контекст для формирования `JOIN` и `WHERE`
+
+---
+
+## 5. ConditionGroup
+
+`ConditionGroup` представляет логическую группу условий для конкретного столбца.
 
 ### Конструктор
 
@@ -65,21 +154,16 @@ $filter = FilterDto::Filter(
 public function __construct(
     public readonly string $column,
     public readonly Criterion|FindByDate $condition,
-    public readonly LogicOperator $LogicOperator = LogicOperator::OR
+    public readonly LogicOperator $logicOperator = LogicOperator::OR
 )
 ```
 
 ### Статические методы
 
 ```php
-ConditionGroup::and(string $column, Criterion|FindByDate $condition): self
-ConditionGroup::or(string $column, Criterion|FindByDate $condition): self
+ConditionGroup::and(string $column, Criterion|FindByDate ...$condition): self
+ConditionGroup::or(string $column, Criterion|FindByDate ...$condition): self
 ```
-
-* `and()` - строит условие с логикой AND
-* `or()` - строит условие с логикой OR
-
----
 
 ### Пример
 
@@ -90,38 +174,48 @@ ConditionGroup::or('role', Criterion::eq('admin'));
 
 ---
 
-## 3. Criterion
+## 6. Criterion — оператор условия
 
-`Criterion` задаёт оператор условия фильтрации (`=`, `IN`, `LIKE` и др.).
+`Criterion` описывает одно атомарное условие фильтрации.
 
-### Примеры методов
+### Поддерживаемые операторы
 
 ```php
-Criterion::eq($value)      // =
-Criterion::notEq($value)   // !=
-Criterion::gr($value)      // >
-Criterion::grEq($value)    // >=
-Criterion::ls($value)      // <
-Criterion::lsEq($value)    // <=
-Criterion::in([$values])   // IN
-Criterion::notIn([$values])// NOT IN
-Criterion::like($value)    // LIKE
-Criterion::notLike($value) // NOT LIKE
+Criterion::eq($value)           // =
+Criterion::notEq($value)        // !=
+Criterion::gr($value)           // >
+Criterion::grEq($value)         // >=
+Criterion::ls($value)           // <
+Criterion::lsEq($value)         // <=
+Criterion::in(array $values)    // IN
+Criterion::notIn(array $values) // NOT IN
+Criterion::like($value)         // LIKE
+Criterion::notLike($value)      // NOT LIKE
 ```
 
 ---
 
-## 4. Pagination, Join, OrderBy
+## 7. Pagination, Join, OrderBy
 
-Дополнительные свойства для расширенных запросов:
+### Пример расширенного запроса
 
 ```php
 $filter = FilterDto::Filter(
     where: [
-        ConditionGroup::and('name', Criterion::in(['Leha', 'Alisa', 'Kiril'])),
-        ConditionGroup::or('role', Criterion::eq('admin')),
+        ConditionGroup::and(
+            'name',
+            Criterion::in(['Leha', 'Alisa', 'Kiril'])
+        ),
+        ConditionGroup::or(
+            'role',
+            Criterion::eq('admin')
+        ),
     ],
-    pagination: Pagination::By(50, true, true),
+    pagination: Pagination::By(
+        perPage: 50,
+        withTotal: true,
+        withPages: true
+    ),
     joins: [
         Join::make(
             table: Table::is('card', 'cd'),
@@ -129,10 +223,11 @@ $filter = FilterDto::Filter(
             joinType: JoinType::INNER,
             on: [
                 OnCondition::eq('list_id', 1, LogicOperator::OR),
-                OnCondition::eq('list_id', 2, LogicOperator::OR)
+                OnCondition::eq('list_id', 2, LogicOperator::OR),
             ]
         )
     ],
     orderBy: null
 );
 ```
+
