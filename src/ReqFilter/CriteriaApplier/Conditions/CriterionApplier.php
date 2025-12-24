@@ -14,7 +14,7 @@ use Doctrine\DBAL\Query\QueryBuilder;
 final class CriterionApplier implements CriteriaApplierInterface
 {
     public function apply(QueryBuilder $qb, string $alias, FilterDto $dto, int $countWhere): int {
-        foreach ($dto->where as $group) {
+        foreach ($dto->getConditions() as $group) {
             if (!$group instanceof ConditionGroup) continue;
             if ($group->conditions === []) continue;
 

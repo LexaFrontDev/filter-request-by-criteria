@@ -13,11 +13,9 @@ class PaginationApplier implements CriteriaApplierInterface
 {
     public function apply(QueryBuilder $qb, string $alias,  FilterDto $dto, int $countWhere): int
     {
-        if ($dto->pagination instanceof Pagination) {
-            if ($dto->pagination->paginationEnabled) {
-                if (null !== $dto->pagination->offset) $qb->setFirstResult($dto->pagination->offset);
-                if (null !== $dto->pagination->limit) $qb->setMaxResults($dto->pagination->limit);
-            }
+        if ($dto->getPagination() instanceof Pagination) {
+            if (null !== $dto->getPagination()->offset) $qb->setFirstResult($dto->getPagination()->offset);
+            if (null !== $dto->getPagination()->limit) $qb->setMaxResults($dto->getPagination()->limit);
         }
         return $countWhere;
     }

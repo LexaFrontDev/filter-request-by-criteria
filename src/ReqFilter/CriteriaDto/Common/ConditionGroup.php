@@ -10,7 +10,7 @@ final class ConditionGroup
     /**
      * @param list<Criterion|FindByDate> $conditions
      */
-    public function __construct(
+    private function __construct(
         public readonly string $column,
         public readonly array $conditions,
         public readonly LogicOperator $logic = LogicOperator::OR
@@ -26,3 +26,4 @@ final class ConditionGroup
         return new self($column, $conditions, LogicOperator::OR);
     }
 }
+

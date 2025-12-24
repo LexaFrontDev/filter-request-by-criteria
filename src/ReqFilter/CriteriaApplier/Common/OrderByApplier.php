@@ -11,8 +11,8 @@ class OrderByApplier implements CriteriaApplierInterface
 {
     public function apply(QueryBuilder $qb, string $alias,  FilterDto $dto, int $countWhere): int
     {
-        if ($dto->orderBy instanceof OrderBy) {
-            $qb->addOrderBy($dto->orderBy->field, $dto->orderBy->direction);
+        if ($dto->getOrderBy() instanceof OrderBy) {
+            $qb->addOrderBy($dto->getOrderBy()->field, $dto->getOrderBy()->direction->value);
         }
 
         return $countWhere;

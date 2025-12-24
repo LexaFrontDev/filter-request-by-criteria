@@ -6,27 +6,74 @@ use App\ReqFilter\CriteriaDto\Common\Table;
 
 final class Join
 {
-    /**
-     * @param string[]|string $select
-     * @param OnCondition[]|null $on
-     */
-    public function __construct(
-        public readonly Table $table,
-        public readonly string|array $select = [],
-        public readonly string $joinType = JoinType::INNER,
-        public readonly ?array $on = null,
-    ) {
+    private Table $table;
+    private array $select = [];
+    private string $joinType = JoinType::INNER;
+    /** @var OnCondition[]|null */
+
+    private ?array $on = null;
+
+    private function __construct(Table $table)
+    {
+        $this->table = $table;
     }
 
-
-    /**
-     * @param Table $table
-     * @param string|array $select
-     * @param array|null $on
-     * @return Join
-     */
-    public static function make(Table $table, string|array $select = [], string $joinType = JoinType::INNER, ?array $on = null): Join
+    public static function create(Table $table): self
     {
-        return new self($table, $select, $joinType, $on);
+        return new self($table);
+    }
+
+    public function select(array $columns): self
+    {
+        $this->select = $columns;
+        return $this;
+    }
+
+    public function innerJoin(): self
+    {
+        $this->joinType = JoinType::INNER;
+        return $this;
+    }
+
+    public function leftJoin(): self
+    {
+        $this->joinType = JoinType::LEFT;
+        return $this;
+    }
+
+    public function rightJoin(): self
+    {
+        $this->joinType = JoinType::RIGHT;
+        return $this;
+    }
+
+    public function on(OnCondition $condition): self
+    {
+        if ($this->on === null) {
+            $this->on = [];
+        }
+        $this->on[] = $condition;
+        return $this;
+    }
+
+    // --- Getters для DTO ---
+    public function getTable(): Table
+    {
+        return $this->table;
+    }
+
+    public function getSelect(): array
+    {
+        return $this->select;
+    }
+
+    public function getJoinType(): string
+    {
+        return $this->joinType;
+    }
+
+    public function getOn(): ?array
+    {
+        return $this->on;
     }
 }

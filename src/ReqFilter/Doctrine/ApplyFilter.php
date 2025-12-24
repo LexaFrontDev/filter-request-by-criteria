@@ -8,6 +8,7 @@ use App\ReqFilter\CriteriaApplier\CriteriaApplierInterface;
 use App\ReqFilter\CriteriaApplier\CriteriaApplierJoinInterface;
 use App\ReqFilter\CriteriaDto\Common\FilterDto;
 use App\ReqFilter\CriteriaDto\Common\Table;
+use App\ReqFilter\CriteriaDto\Common\UnionPart;
 use Doctrine\DBAL\Exception;
 use Doctrine\DBAL\Query\QueryBuilder;
 use Doctrine\ORM\EntityManagerInterface;
@@ -27,15 +28,47 @@ class ApplyFilter implements FilterInterface
 
 
     /**
-     * TODO review this method and change array on object
+     * The initialization requests method
+     * @param FilterDto|null $criterion
+     * @param Table $table
+     * @param string $select
      * @return $this
      */
-    public function initFilter(?FilterDto $criteriasDto, Table $table, string $select = '*'): self
+    public function initFilter(?FilterDto $criterion, Table $table, string $select = '*'): self
     {
         $this->qb = $this->entityManager->getConnection()->createQueryBuilder()
             ->select($select)
             ->from($table->tableName, $table->alias);
-        return $this->applyFilters($criteriasDto, $table, $select);
+        return $this->applyFilters($criterion, $table);
+    }
+
+
+    public function union(UnionPart $unionPart, bool $isAll = false): self
+    {
+        $sqlParts = [];
+        $params = [];
+
+        foreach ($unionPart->getParts() as $part) {
+            $qb = $this->entityManager->getConnection()->createQueryBuilder()
+                ->select(is_array($part->select) ? implode(', ', $part->select) : $part->select)
+                ->from($part->table->tableName, $part->table->alias);
+
+            foreach ($this->criterionAppliers as $applier) {
+                $applier->apply($qb, $part->table->alias, $part->filterDto, 0);
+            }
+
+            $sqlParts[] = '(' . $qb->getSQL() . ')';
+            $params = array_merge($params, $qb->getParameters());
+        }
+
+        $unionSql = implode($unionPart->isAll() || $isAll ? ' UNION ALL ' : ' UNION ', $sqlParts);
+        $this->qb = $this->entityManager->getConnection()->createQueryBuilder()
+            ->select('*')
+            ->from('(' . $unionSql . ')', 'u');
+        foreach ($params as $key => $value) {
+            $this->qb->setParameter($key, $value);
+        }
+        return $this;
     }
 
 
@@ -43,19 +76,14 @@ class ApplyFilter implements FilterInterface
      * @param FilterDto|null $criteriasDto
      * @param Table $table
      * @return $this
-     * TODO added filter by join and corrected cycle
      */
     private function applyFilters(?FilterDto $criteriasDto, Table $table){
-        if (empty($criteriasDto->where) && empty($criteriasDto->joins) && empty($criteriasDto->pagination) && empty($criteriasDto->orderBy)) {
+        if (empty($criteriasDto->getConditions()) && empty($criteriasDto->getJoins()) && empty($criteriasDto->getPagination()) && empty($criteriasDto->getOrderBy())) {
             return $this;
         }
-
-        $countWhere = 0;
-
         foreach ($this->criterionAppliers as $applier) {
-            $countWhere = $applier->apply($this->qb, $table->alias, $criteriasDto, $countWhere);
+            $countWhere = $applier->apply($this->qb, $table->alias, $criteriasDto, 0);
         }
-
         return $this;
     }
 

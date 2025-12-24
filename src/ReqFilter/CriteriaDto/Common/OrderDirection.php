@@ -2,8 +2,8 @@
 
 namespace App\ReqFilter\CriteriaDto\Common;
 
-final class OrderDirection
+enum OrderDirection: string
 {
-    public const  ASC = 'ASC';
-    public const DESC = 'DESC';
+    case  ASC = 'ASC';
+    case DESC = 'DESC';
 }

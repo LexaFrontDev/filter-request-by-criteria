@@ -4,9 +4,14 @@ namespace App\ReqFilter\CriteriaDto\Common;
 
 final class OrderBy
 {
-    public function __construct(
+    private function __construct(
         public readonly string $field,
-        public readonly string $direction = OrderDirection::DESC,
+        public readonly OrderDirection $direction = OrderDirection::DESC,
     ) {
+    }
+
+    public static function by(string $field, OrderDirection $direction): OrderBy
+    {
+        return new self($field, $direction);
     }
 }

@@ -1,234 +1,117 @@
 # DTO-based Query Filtering Library *(WIP)*
 
-This library is designed to build **typed, extensible, and secure SQL queries** using DTOs.
-Supported features include:
+This library is designed to build **typed, extensible, and safe SQL queries** on top of Doctrine `QueryBuilder` using DTOs.
 
-* filtering (`WHERE`)
-* logical groups (`AND`, `OR`)
-* pagination
+The main goal is to **eliminate unstructured arrays, manual SQL string concatenation, and implicit logic**, replacing them with a declarative and verifiable query description.
+
+---
+
+## Features
+
+Supported functionality:
+
+* Filtering (`WHERE`)
+* Logical groups (`AND`, `OR`)
 * `JOIN`
-* sorting (`ORDER BY`)
+* Sorting (`ORDER BY`)
+* Pagination
+* `UNION` / `UNION ALL`
 
-English version: [English version](./readme.md)
+All operations are described via DTOs or Criteria objects and are validated before being applied to the query.
 
 ---
 
 ## General Concept
 
-The library eliminates direct SQL construction and the use of unstructured arrays.
-Queries are described **declaratively** using DTOs, after which the library:
+### Core Principles
 
-* validates the query structure
-* enforces strict typing
-* builds a valid `QueryBuilder`
+* ❌ No unstructured input arrays
 
-This approach simplifies code maintenance and reduces query-level errors.
+* ❌ No business logic passed via arrays
 
----
+* ❌ No string-based SQL
 
-## 1. Enabling Filtering
+* ❌ No “magic” keys
 
-To apply filtering, a repository must depend on the `FilterInterface` contract.
+* ✅ DTOs and Value Objects
 
-### Dependency Injection Example
+* ✅ Arrays are allowed **only as data** (IN, SELECT, value collections)
 
-```php
-class SomeRepository
-{
-    public function __construct(
-        private readonly FilterInterface $filter
-    ) {}
-}
-```
+* ✅ Explicit contracts
 
-The repository does not contain SQL-building logic and interacts with filtering exclusively through the contract.
+* ✅ Strong typing
 
----
+* ✅ Extensibility without modifying the core
 
-## 2. FilterDto — Root Query DTO
+### How It Works
 
-`FilterDto` is the primary object that describes the query structure.
+1. A query is described using **DTOs or Criteria**
+2. The DTO is validated
+3. The DTO is transformed into a set of Criteria
+4. The Criteria are applied to the `QueryBuilder`
 
-### Constructor
+As a result:
 
-```php
-public function __construct(
-    public readonly ?array $where,
-    public readonly ?Pagination $pagination,
-    public readonly ?array $joins = null,
-    public readonly ?OrderBy $orderBy = null
-)
-```
-
-### Field Description
-
-| Field        | Type                     | Description           |
-| ------------ | ------------------------ | --------------------- |
-| `where`      | `ConditionGroup[]\|null` | Filtering conditions  |
-| `pagination` | `Pagination\|null`       | Pagination parameters |
-| `joins`      | `Join[]\|null`           | JOIN definitions      |
-| `orderBy`    | `OrderBy\|null`          | Result ordering       |
+* query logic is separated from infrastructure
+* the code is easy to read and extend
+* errors are caught **before SQL execution**
 
 ---
 
-### Factory Method (Recommended)
+## Documentation Structure
 
-To improve code readability, a static factory method is recommended:
+The documentation is split into independent parts.
 
-```php
-public static function Filter(
-    ?array $where,
-    ?Pagination $pagination,
-    ?array $joins = null,
-    ?OrderBy $orderBy = null
-): self
-```
+### 1. Filtering (`WHERE`)
+
+Description of basic filters, logical groups, and criteria.
+
+ [FilterDto and Criteria documentation](./docs/ExplainEn/FilterDto.md)
 
 ---
 
-## 3. Basic Filter Example
+### 2. `UNION` / `UNION ALL`
 
-The query applies the following conditions:
+Description of building union queries using a shared DTO and separate Criteria.
 
-* `name IN (...)`
-* the user has the role `admin` **or** `user`
-
-```php
-use App\ReqFilter\CriteriaDto\Common\FilterDto;
-use App\ReqFilter\CriteriaDto\Common\ConditionGroup;
-use App\ReqFilter\CriteriaDto\Conditions\Criterion;
-
-$filter = FilterDto::Filter(
-    where: [
-        ConditionGroup::and(
-            'name',
-            Criterion::in(['Leha', 'Alisa', 'Kiril'])
-        ),
-        ConditionGroup::or(
-            'role',
-            Criterion::eq('admin'),
-            Criterion::eq('user')
-        ),
-    ],
-    pagination: null
-);
-```
-
-### Notes
-
-* `ConditionGroup::and()` creates a condition with the `AND` logical operator
-* `ConditionGroup::or()` creates a condition with the `OR` logical operator
-* each `ConditionGroup` contains one or more `Criterion`
+ [UNION documentation](./docs/ExplainEn/union.md)
 
 ---
 
-## 4. Applying the Filter
+### 3. Applying DTOs to QueryBuilder
 
-After building the `FilterDto`, the `initFilter` method is used.
+How DTOs and Criteria are applied to the `QueryBuilder`, execution order, and layer responsibilities.
 
-```php
-$result = $this->filter->initFilter(
-    criteriasDto: $filter,
-    table: Table::is(
-        tableName: 'list',
-        alias: 'l'
-    )
-);
-```
-
-`Table` defines:
-
-* the base table
-* the table alias
-* the context for building `JOIN` and `WHERE` clauses
+ [Applying filters documentation](./docs/ExplainEn/Apply.md)
 
 ---
 
-## 5. ConditionGroup
+## When to Use This Library
 
-`ConditionGroup` represents a logical group of conditions for a specific column.
+This library is especially useful if:
 
-### Constructor
-
-```php
-public function __construct(
-    public readonly string $column,
-    public readonly Criterion|FindByDate $condition,
-    public readonly LogicOperator $logicOperator = LogicOperator::OR
-)
-```
-
-### Static Methods
-
-```php
-ConditionGroup::and(string $column, Criterion|FindByDate ...$condition): self
-ConditionGroup::or(string $column, Criterion|FindByDate ...$condition): self
-```
-
-### Example
-
-```php
-ConditionGroup::and('name', Criterion::in(['Leha', 'Alisa']));
-ConditionGroup::or('role', Criterion::eq('admin'));
-```
+* you have complex filters with `AND` / `OR`
+* your API accepts dynamic filtering parameters
+* you use `UNION` queries
+* strong typing and strict query structure control are important
+* the project is long-lived and maintained by multiple developers
 
 ---
 
-## 6. Criterion — Condition Operator
+## Project Status
 
-`Criterion` describes a single atomic filtering condition.
+ **Work in Progress**
 
-### Supported Operators
-
-```php
-Criterion::eq($value)            // =
-Criterion::notEq($value)         // !=
-Criterion::gr($value)            // >
-Criterion::grEq($value)          // >=
-Criterion::ls($value)            // <
-Criterion::lsEq($value)          // <=
-Criterion::in(array $values)     // IN
-Criterion::notIn(array $values)  // NOT IN
-Criterion::like($value)          // LIKE
-Criterion::notLike($value)       // NOT LIKE
-```
+* Documentation is evolving
+* Breaking changes are possible
 
 ---
 
-## 7. Pagination, Join, OrderBy
+## Documentation Language
 
-### Extended Query Example
+* 🇷🇺 Russian version  [Russian version](./readmeru.md)
+* 🇬🇧 English version: current
 
-```php
-$filter = FilterDto::Filter(
-    where: [
-        ConditionGroup::and(
-            'name',
-            Criterion::in(['Leha', 'Alisa', 'Kiril'])
-        ),
-        ConditionGroup::or(
-            'role',
-            Criterion::eq('admin')
-        ),
-    ],
-    pagination: Pagination::By(
-        perPage: 50,
-        withTotal: true,
-        withPages: true
-    ),
-    joins: [
-        Join::make(
-            table: Table::is('card', 'cd'),
-            select: ['name'],
-            joinType: JoinType::INNER,
-            on: [
-                OnCondition::eq('list_id', 1, LogicOperator::OR),
-                OnCondition::eq('list_id', 2, LogicOperator::OR),
-            ]
-        )
-    ],
-    orderBy: null
-);
-```
+---
 
-
+If you use this library in a real project, **it is recommended to read the documentation sequentially**, starting with `FilterDto`.

@@ -14,20 +14,20 @@ use Doctrine\DBAL\Query\QueryBuilder;
 class JoinApplier implements CriteriaApplierInterface
 {
 
-    public function apply(QueryBuilder $qb, string $alias, FilterDto $condition, int $countWhere): int
+    public function apply(QueryBuilder $qb, string $alias, FilterDto $dto, int $countWhere): int
     {
-        foreach ($condition->joins as $join)
+        foreach ($dto->getJoins() as $join)
         {
-            $onExpr = $this->buildOnCondition($qb, $join->on, $join->table->alias);
+            $onExpr = $this->buildOnCondition($qb, $join->getOn(), $join->getTable()->alias);
 
-            match ($join->joinType) {
-                JoinType::LEFT  => $qb->leftJoin($alias, $join->table->tableName, $join->table->alias, $onExpr),
-                JoinType::RIGHT => $qb->rightJoin($alias, $join->table->tableName, $join->table->alias, $onExpr),
-                default         => $qb->innerJoin($alias, $join->table->tableName, $join->table->alias, $onExpr),
+            match ($join->getJoinType()) {
+                JoinType::LEFT  => $qb->leftJoin($alias, $join->getTable()->tableName, $join->getTable()->alias, $onExpr),
+                JoinType::RIGHT => $qb->rightJoin($alias, $join->getTable()->tableName, $join->getTable()->alias, $onExpr),
+                default         => $qb->innerJoin($alias, $join->getTable()->tableName, $join->getTable()->alias, $onExpr),
             };
 
-            foreach ((array) $join->select as $field) {
-                $qb->addSelect("{$join->table->alias}.{$field}");
+            foreach ((array) $join->getSelect() as $field) {
+                $qb->addSelect("{$join->getTable()->alias}.{$field}");
             }
             $countWhere++;
         }
@@ -38,7 +38,10 @@ class JoinApplier implements CriteriaApplierInterface
 
 
     /**
+     * @param QueryBuilder $qb
      * @param OnCondition[] $conditions
+     * @param string $joinAlias
+     * @return string
      */
     private function buildOnCondition(QueryBuilder $qb, array $conditions, string $joinAlias): string {
         if ($conditions === []) return '1=1';
