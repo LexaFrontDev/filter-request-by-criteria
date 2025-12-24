@@ -43,15 +43,7 @@ All operations are described via DTOs or Criteria objects and are validated befo
 
 * ✅ Extensibility without modifying the core
 
-### How It Works
-
-1. A query is described using **DTOs or Criteria**
-2. The DTO is validated
-3. The DTO is transformed into a set of Criteria
-4. The Criteria are applied to the `QueryBuilder`
-
 As a result:
-
 * query logic is separated from infrastructure
 * the code is easy to read and extend
 * errors are caught **before SQL execution**
