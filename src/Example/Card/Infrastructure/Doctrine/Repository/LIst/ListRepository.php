@@ -5,15 +5,14 @@ namespace App\Example\Card\Infrastructure\Doctrine\Repository\LIst;
 
 
 use App\Example\Card\Domain\Entity\Lists;
-use App\ReqFilter\Contracts\FilterInterface;
 use App\Example\Card\Domain\Repository\List\ListInterface;
-use App\ReqFilter\CriteriaDto\Common\Table;
+use App\Example\Card\Infrastructure\Doctrine\Criterias\Mappers\FleshList\ReqFleshListMapper;
+use App\Example\Card\Infrastructure\Doctrine\Entity\ListsEntity;
+use App\ReqFilter\Contracts\FilterInterface;
+use App\ReqFilter\Domain\Model\Common\Table;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
-use Doctrine\DBAL\Exception;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
-use App\Example\Card\Infrastructure\Doctrine\Entity\ListsEntity;
-use App\Example\Card\Infrastructure\Doctrine\Criterias\Mappers\FleshList\ReqFleshListMapper;
 
 
 /**

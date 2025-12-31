@@ -37,17 +37,20 @@ public function setPart(UnionCriteria $part): self
 
 `UnionCriteria` представляет **один SQL-запрос** внутри union.
 
-### Статический маппер `un()`
+### Статический метод `create()` и настройка
+
+Используется fluent interface для настройки выборки и фильтрации.
 
 ```php
-$part = UnionCriteria::un(
-    Table::is('card','cd'),
-    ['title', 'id'],
-    FilterDto::create()
-        ->addCondition(
-            ConditionGroup::and('id', Criterion::in([1,2,3,4,5,6]))
-        )
-);
+$part = UnionCriteria::create(Table::is('card','cd'))
+    ->setSelect('title')
+    ->setSelect('id')
+    ->setFilter(
+        FilterDto::create()
+            ->addCondition(
+                ConditionGroup::and('id', Criterion::in([1,2,3,4,5,6]))
+            )
+    );
 ```
 
 > Для работы с `FilterDto` см. [FilterDto README](FilterDto.md).
@@ -58,23 +61,29 @@ $part = UnionCriteria::un(
 
 ```php
 $filter = UnionPart::create()
-    ->setPart(UnionCriteria::un(
-        Table::is('card','cd'),
-        ['title', 'id'],
-        FilterDto::create()
-            ->addCondition(
-                ConditionGroup::and('id', Criterion::in([1,2,3,4,5,6]))
+    ->setPart(
+        UnionCriteria::create(Table::is('card','cd'))
+            ->setSelect('title')
+            ->setSelect('id')
+            ->setFilter(
+                FilterDto::create()
+                    ->addCondition(
+                        ConditionGroup::and('id', Criterion::in([1,2,3,4,5,6]))
+                    )
             )
-    ))
-    ->setPart(UnionCriteria::un(
-        Table::is('user','u'),
-        ['name', 'id'],
-        FilterDto::create()
-            ->addCondition(
-                ConditionGroup::and('id', Criterion::in([1,2,3,4,5,6]))
+    )
+    ->setPart(
+        UnionCriteria::create(Table::is('user','u'))
+            ->setSelect('name')
+            ->setSelect('id')
+            ->setFilter(
+                FilterDto::create()
+                    ->addCondition(
+                        ConditionGroup::and('id', Criterion::in([1,2,3,4,5,6]))
+                    )
+                    ->setOrderBy(OrderBy::by('name', OrderDirection::DESC))
             )
-            ->setOrderBy(OrderBy::by('name','desc'))
-    ));
+    );
 ```
 
 ---

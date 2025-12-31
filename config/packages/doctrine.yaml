@@ -17,13 +17,13 @@ doctrine:
                 type: attribute
                 is_bundle: false
                 dir: '%kernel.project_dir%/src/Example/User/Infrastructure/Doctrine/Entity/'
-                prefix: 'App\FlashCards\User\Infrastructure\Doctrine\Entity\'
+                prefix: 'App\Example\User\Infrastructure\Doctrine\Entity\'
                 alias: User
             Card:
                 type: attribute
                 is_bundle: false
                 dir: '%kernel.project_dir%/src/Example/Card/Infrastructure/Doctrine/Entity/'
-                prefix: 'App\FlashCards\Card\Infrastructure\Doctrine\Entity\'
+                prefix: 'App\Example\Card\Infrastructure\Doctrine\Entity\'
                 alias: Card
 
 when@test:

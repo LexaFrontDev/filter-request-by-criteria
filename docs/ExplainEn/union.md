@@ -1,29 +1,29 @@
 # Union Query Example
 
-### Contents
+### Table of Contents
 
-* [Creating the General DTO](#1-creating-the-general-dto)
-* [UnionCriteria  Single Query](#2-unioncriteria-single-query)
-* [Examples of Building Union Queries](#3-examples-of-building-union-queries)
-* [Applying Union](#4-applying-union)
+* [Creating the main DTO](#1-creating-the-main-dto)
+* [UnionCriteria  a single query](#2-unioncriteria-a-single-query)
+* [Examples of building union queries](#3-examples-of-building-union-queries)
+* [Using Union](#4-using-union)
 
 ---
 
-## 1. Creating the General DTO
+## 1. Creating the main DTO
 
-`UnionPart` is a general DTO for union queries. It serves as a mapper, providing:
+`UnionPart` is the main DTO for union queries. It acts as a mapper, providing:
 
-* strong typing;
-* convenient query structure building;
-* elimination of manual array construction.
+* strict typing;
+* easy construction of the query structure;
+* elimination of manual array handling.
 
-### Creating an Instance
+### Creating an instance
 
 ```php
 $union = UnionPart::create();
 ```
 
-### Main Method
+### Main method
 
 ```php
 public function setPart(UnionCriteria $part): self
@@ -33,57 +33,66 @@ public function setPart(UnionCriteria $part): self
 
 ---
 
-## 2. UnionCriteria  Single Query
+## 2. UnionCriteria a single query
 
 `UnionCriteria` represents **a single SQL query** within the union.
 
-### Static Mapper `un()`
+### Static `create()` method and configuration
+
+A fluent interface is used to set up selection and filtering.
 
 ```php
-$part = UnionCriteria::un(
-    Table::is('card','cd'),
-    ['title', 'id'],
-    FilterDto::create()
-        ->addCondition(
-            ConditionGroup::and('id', Criterion::in([1,2,3,4,5,6]))
-        )
-);
+$part = UnionCriteria::create(Table::is('card','cd'))
+    ->select('title')
+    ->select('id')
+    ->setFilter(
+        FilterDto::create()
+            ->addCondition(
+                ConditionGroup::and('id', Criterion::in([1,2,3,4,5,6]))
+            )
+    );
 ```
 
-> For working with `FilterDto`, see the [FilterDto README](FilterDto.md).
+> For working with `FilterDto`, see [FilterDto README](FilterDto.md).
 
 ---
 
-## 3. Examples of Building Union Queries
+## 3. Examples of building union queries
 
 ```php
 $filter = UnionPart::create()
-    ->setPart(UnionCriteria::un(
-        Table::is('card','cd'),
-        ['title', 'id'],
-        FilterDto::create()
-            ->addCondition(
-                ConditionGroup::and('id', Criterion::in([1,2,3,4,5,6]))
+    ->setPart(
+        UnionCriteria::create(Table::is('card','cd'))
+            ->select('title')
+            ->select('id')
+            ->setFilter(
+                FilterDto::create()
+                    ->addCondition(
+                        ConditionGroup::and('id', Criterion::in([1,2,3,4,5,6]))
+                    )
             )
-    ))
-    ->setPart(UnionCriteria::un(
-        Table::is('user','u'),
-        ['name', 'id'],
-        FilterDto::create()
-            ->addCondition(
-                ConditionGroup::and('id', Criterion::in([1,2,3,4,5,6]))
+    )
+    ->setPart(
+        UnionCriteria::create(Table::is('user','u'))
+            ->select('name')
+            ->select('id')
+            ->setFilter(
+                FilterDto::create()
+                    ->addCondition(
+                        ConditionGroup::and('id', Criterion::in([1,2,3,4,5,6]))
+                    )
+                    ->setOrderBy(OrderBy::by('name', OrderDirection::DESC))
             )
-            ->setOrderBy(OrderBy::by('name','desc'))
-    ));
+    );
 ```
 
 ---
 
-## 4. Applying Union
+## 4. Using Union
 
-The `FilterInterface` is used to apply union queries.
+The `FilterInterface` is used to execute union queries.
 
-### Interface Method
+### Interface method
 
 ```php
 /**
@@ -97,7 +106,7 @@ public function union(UnionPart $unionPart, bool $isAll = false): self;
 * `$unionPart`  DTO describing the union query
 * `$isAll`  type of union: `UNION ALL` or `UNION` (default)
 
-### Usage Examples
+### Usage examples
 
 Without `UNION ALL`:
 

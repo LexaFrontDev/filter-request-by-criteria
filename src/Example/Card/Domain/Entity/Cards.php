@@ -5,7 +5,7 @@ namespace App\Example\Card\Domain\Entity;
 final class Cards
 {
     public function __construct(
-        public readonly ?int $id = null,
+        public readonly ?int $id,
         public readonly string $front,
         public readonly string $back,
         public readonly int $user_id,

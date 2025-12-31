@@ -2,8 +2,8 @@
 
 namespace App\Example\Card\Infrastructure\Doctrine\Criterias\FleshList;
 
-use App\ReqFilter\CriteriaDto\Common\Pagination;
-use App\ReqFilter\CriteriaDto\Conditions\Criterion;
+use App\ReqFilter\Domain\Model\Common\Pagination;
+use App\ReqFilter\Domain\Model\Conditions\Criterion;
 
 final class ReqFleshList
 {

@@ -2,9 +2,9 @@
 
 namespace App\ReqFilter\Contracts;
 
-use App\ReqFilter\CriteriaDto\Common\FilterDto;
-use App\ReqFilter\CriteriaDto\Common\Table;
-use App\ReqFilter\CriteriaDto\Common\UnionPart;
+use App\ReqFilter\Domain\Model\Common\FilterDto;
+use App\ReqFilter\Domain\Model\Common\Table;
+use App\ReqFilter\Domain\Model\Common\UnionPart;
 
 interface FilterInterface
 {

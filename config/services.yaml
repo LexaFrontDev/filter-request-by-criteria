@@ -13,15 +13,20 @@ services:
             - '../src/Entity/'
             - '../src/Kernel.php'
 
-    App\ReqFilter\CriteriaApplier\:
-        resource: '../src/ReqFilter/CriteriaApplier'
+    _instanceof:
+        App\ReqFilter\Domain\Validate\Contract\DefaultValidatorInterface:
+            tags: ['app.req_filter.validator']
+
+    App\ReqFilter\Infrastructure\Doctrine\Appliers\:
+        resource: '../src/ReqFilter/Infrastructure/Doctrine/Appliers'
         tags: [ 'app.criterion_applier']
         autoconfigure: true
         autowire: true
 
-
-
-
-    App\ReqFilter\Doctrine\ApplyFilter:
+    App\ReqFilter\Infrastructure\Doctrine\Filter\DoctrineFilterApplier:
         arguments:
                 $criterionAppliers: !tagged_iterator app.criterion_applier
+                $criterionValidators: !tagged_iterator app.req_filter.validator
+
+
+

@@ -13,7 +13,7 @@ class ListsEntity
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
     private ?int $id = null;
-    #[ORM\Column(name: 'user_id', type: 'int', length: 255)]
+    #[ORM\Column(name: 'user_id', type: 'integer')]
     public readonly int $user_id;
 
     #[ORM\Column(type: 'string', length: 255)]
