@@ -43,8 +43,8 @@ public function setPart(UnionCriteria $part): self
 
 ```php
 $part = UnionCriteria::create(Table::is('card','cd'))
-    ->setSelect('title')
-    ->setSelect('id')
+    ->select('title')
+    ->select('id')
     ->setFilter(
         FilterDto::create()
             ->addCondition(
@@ -63,8 +63,8 @@ $part = UnionCriteria::create(Table::is('card','cd'))
 $filter = UnionPart::create()
     ->setPart(
         UnionCriteria::create(Table::is('card','cd'))
-            ->setSelect('title')
-            ->setSelect('id')
+            ->select('title')
+            ->select('id')
             ->setFilter(
                 FilterDto::create()
                     ->addCondition(
@@ -74,8 +74,8 @@ $filter = UnionPart::create()
     )
     ->setPart(
         UnionCriteria::create(Table::is('user','u'))
-            ->setSelect('name')
-            ->setSelect('id')
+            ->select('name')
+            ->select('id')
             ->setFilter(
                 FilterDto::create()
                     ->addCondition(
