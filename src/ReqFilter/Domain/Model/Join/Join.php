@@ -2,6 +2,7 @@
 
 namespace App\ReqFilter\Domain\Model\Join;
 
+use App\ReqFilter\Domain\Model\Common\ConditionGroup;
 use App\ReqFilter\Domain\Model\Common\Table;
 
 final class Join
@@ -11,8 +12,7 @@ final class Join
     /*** @var string[] */
     private array $select = [];
     private JoinType $joinType = JoinType::INNER;
-    /** @var OnCondition[]|null */
-
+    /** @var ConditionGroup[]|null */
     private ?array $on = null;
 
     private function __construct(Table $table)
@@ -49,7 +49,10 @@ final class Join
         return $this;
     }
 
-    public function on(OnCondition $condition): self
+    /**
+     * @return $this
+     */
+    public function on(ConditionGroup $condition): self
     {
         if ($this->on === null) {
             $this->on = [];
@@ -79,3 +82,5 @@ final class Join
         return $this->on;
     }
 }
+
+

@@ -21,3 +21,4 @@ class PaginationApplier implements CriteriaApplierInterface
         return $countWhere;
     }
 }
+

@@ -8,3 +8,4 @@ namespace App\ReqFilter\Domain\ExceptionContracts;
 interface InvalidFilterValueInterface
 {
 }
+

@@ -8,3 +8,4 @@ enum JoinType: string
     case INNER = 'INNER';
     case RIGHT = 'RIGHT';
 }
+

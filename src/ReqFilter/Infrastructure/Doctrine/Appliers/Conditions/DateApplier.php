@@ -79,3 +79,4 @@ final class DateApplier implements CriteriaApplierInterface
         return $countWhere;
     }
 }
+

@@ -15,3 +15,4 @@ final class FindByDate
         return new self($YmdDate, $YmdTime, $YmdTimeStamp);
     }
 }
+

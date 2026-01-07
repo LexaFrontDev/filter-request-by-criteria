@@ -1,32 +1,34 @@
 parameters:
 
 services:
-    _defaults:
-        autowire: true
-        autoconfigure: true
+  _defaults:
+    autowire: true
+    autoconfigure: true
 
 
-    App\:
-        resource: '../src/'
-        exclude:
-            - '../src/DependencyInjection/'
-            - '../src/Entity/'
-            - '../src/Kernel.php'
+  App\:
+    resource: '../src/'
+    exclude:
+      - '../src/DependencyInjection/'
+      - '../src/Entity/'
+      - '../src/Kernel.php'
 
-    _instanceof:
-        App\ReqFilter\Domain\Validate\Contract\DefaultValidatorInterface:
-            tags: ['app.req_filter.validator']
+  _instanceof:
+    App\ReqFilter\Domain\Validate\Contract\DefaultValidatorInterface:
+      tags: ['app.req_filter.validator']
 
-    App\ReqFilter\Infrastructure\Doctrine\Appliers\:
-        resource: '../src/ReqFilter/Infrastructure/Doctrine/Appliers'
-        tags: [ 'app.criterion_applier']
-        autoconfigure: true
-        autowire: true
+  App\ReqFilter\Infrastructure\Doctrine\Appliers\:
+    resource: '../src/ReqFilter/Infrastructure/Doctrine/Appliers'
+    tags: [ 'app.criterion_applier']
+    autoconfigure: true
+    autowire: true
 
-    App\ReqFilter\Infrastructure\Doctrine\Filter\DoctrineFilterApplier:
-        arguments:
-                $criterionAppliers: !tagged_iterator app.criterion_applier
-                $criterionValidators: !tagged_iterator app.req_filter.validator
+  App\ReqFilter\Infrastructure\Doctrine\Filter\DoctrineFilterApplier:
+    arguments:
+      $criterionAppliers: !tagged_iterator app.criterion_applier
+      $criterionValidators: !tagged_iterator app.req_filter.validator
 
 
-
+  App\ReqFilter\Contracts\FilterInterface:
+    alias: App\ReqFilter\Infrastructure\Doctrine\Filter\DoctrineFilterApplier
+    public: true

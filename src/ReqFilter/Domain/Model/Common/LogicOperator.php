@@ -7,3 +7,5 @@ enum LogicOperator: string
     case OR = 'or';
     case AND = 'and';
 }
+
+

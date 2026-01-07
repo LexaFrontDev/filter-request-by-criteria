@@ -20,3 +20,5 @@ final class UnionPart
         return $this->parts;
     }
 }
+
+

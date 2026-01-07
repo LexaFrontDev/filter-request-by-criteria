@@ -14,7 +14,7 @@ class ListsEntity
     #[ORM\Column(type: 'integer')]
     private ?int $id = null;
     #[ORM\Column(name: 'user_id', type: 'integer')]
-    public readonly int $user_id;
+    public  int $user_id;
 
     #[ORM\Column(type: 'string', length: 255)]
     private string $title;

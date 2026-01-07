@@ -46,3 +46,4 @@ final class UnionCriteria
         return $this->filterDto;
     }
 }
+

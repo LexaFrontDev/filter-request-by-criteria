@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Tests\ReqFilter\Validate\Validators;
+namespace App\Tests\ReqFilter\ReqFilter\Validate\Validators;
 
 use App\ReqFilter\Domain\Model\Common\FilterDto;
 use App\ReqFilter\Domain\Model\Common\Pagination;
@@ -58,3 +58,5 @@ class PaginationValidatorTest extends TestCase
         $this->validator->validate($dto);
     }
 }
+
+

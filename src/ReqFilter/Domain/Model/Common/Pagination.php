@@ -15,3 +15,4 @@ final class Pagination
         return new self($limit, $offset);
     }
 }
+

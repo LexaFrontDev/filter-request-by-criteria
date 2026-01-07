@@ -18,9 +18,11 @@ final class ConditionsValidator implements DefaultValidatorInterface
     {
         $conditions = $dto->getConditions();
         foreach ($conditions as $condition) {
-            
             if (trim($condition->column) === '') throw new ValidatorException("ConditionGroup column cannot be empty", ['condition' => $condition]);
+            if(!array_is_list($condition->conditions)) throw new ValidatorException('values should be an array list', ['conditionGroup' => $condition]);
+
             foreach ($condition->conditions as $criterion) {
+
                 if ($criterion instanceof Criterion) {
                     $this->validateCriterion($criterion);
                 } elseif ($criterion instanceof FindByDate) {
@@ -44,9 +46,10 @@ final class ConditionsValidator implements DefaultValidatorInterface
             case 'integer':
             case 'double':
                 if ($value < 0) throw new ValidatorException("Criterion value must be positive", ['criterion' => $criterion]);
-                break;
+            break;
             case 'array':
                 if (empty($value)) throw new ValidatorException("Criterion array cannot be empty", ['criterion' => $criterion]);
+                if(!array_is_list($value)) throw new ValidatorException('values should be an array list', ['criterion' => $criterion]);
                 break;
             case 'NULL':
                 throw new ValidatorException("Criterion value cannot be null", ['criterion' => $criterion]);
@@ -66,3 +69,4 @@ final class ConditionsValidator implements DefaultValidatorInterface
     }
 
 }
+

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Tests\ReqFilter\Validate\Validators;
+namespace App\Tests\ReqFilter\ReqFilter\Validate\Validators;
 
 use App\ReqFilter\Domain\Model\Common\ConditionGroup;
 use App\ReqFilter\Domain\Model\Common\FilterDto;
@@ -108,3 +108,5 @@ class ConditionsValidatorTest extends TestCase
         $this->validator->validate($dto);
     }
 }
+
+

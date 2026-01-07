@@ -46,7 +46,7 @@ final class Criterion
     /**
      * @param array<int|string> $values
      */
-    public static function in(array $values): self
+    public static function in(string|int ...$values): self
     {
         return new self(ComparisonOperator::IN, $values);
     }
@@ -54,7 +54,7 @@ final class Criterion
     /**
      * @param array<int|string> $values
      */
-    public static function notIn(array $values): self
+    public static function notIn(string|int ...$values): self
     {
         return new self(ComparisonOperator::NOT_IN, $values);
     }
@@ -71,3 +71,5 @@ final class Criterion
         return new self(ComparisonOperator::NOT_LIKE, $value);
     }
 }
+
+

@@ -136,3 +136,4 @@ class DoctrineFilterApplier implements FilterInterface
         return $this->qb->getParameters();
     }
 }
+

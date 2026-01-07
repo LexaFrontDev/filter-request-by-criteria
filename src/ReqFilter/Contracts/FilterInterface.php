@@ -39,3 +39,4 @@ interface FilterInterface
      */
     public function getParameter(): array;
 }
+

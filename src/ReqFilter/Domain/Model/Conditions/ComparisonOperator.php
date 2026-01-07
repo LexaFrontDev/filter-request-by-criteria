@@ -19,3 +19,5 @@ enum ComparisonOperator: string
     case LIKE = 'LIKE';
     case NOT_LIKE = 'NOT LIKE';
 }
+
+

@@ -16,3 +16,4 @@ interface CriteriaApplierInterface
      */
     public function apply(QueryBuilder $qb, string $alias,  FilterDto $dto, int $countWhere): int;
 }
+

@@ -68,16 +68,16 @@ class UserEntity implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function fromDto(User $dto): UserEntity
     {
-       if(!is_null($dto->id)) $this->id = $dto->id;
-       $this->name = $dto->name;
-       $this->email = $dto->email;
-       $this->password = $dto->password;
-       $this->role = $dto->role;
-       $this->active = $dto->active;
-       $this->createdAt = new \DateTimeImmutable($dto->createdAt);
-       $this->updatedAt = new \DateTimeImmutable($dto->updatedAt);
-       $this->deleted = $dto->deleted;
-       return $this;
+        if(!is_null($dto->id)) $this->id = $dto->id;
+        $this->name = $dto->name;
+        $this->email = $dto->email;
+        $this->password = $dto->password;
+        $this->role = $dto->role;
+        $this->active = $dto->active;
+        $this->createdAt = new \DateTimeImmutable($dto->createdAt);
+        $this->updatedAt = new \DateTimeImmutable($dto->updatedAt);
+        $this->deleted = $dto->deleted;
+        return $this;
     }
 
     // --- Getters ---

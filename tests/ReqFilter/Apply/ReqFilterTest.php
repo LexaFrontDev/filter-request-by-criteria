@@ -1,27 +1,23 @@
 <?php
 
-namespace App\Tests\ReqFilter\Apply;
+namespace App\Tests\ReqFilter\ReqFilter\Apply;
 
-use App\Example\User\Domain\Entity\User;
-use App\ReqFilter\Contracts\FilterInterface;
-use App\ReqFilter\Domain\Model\Common\ConditionGroup;
-use App\ReqFilter\Domain\Model\Common\FilterDto;
-use App\ReqFilter\Domain\Model\Common\LogicOperator;
-use App\ReqFilter\Domain\Model\Common\OrderBy;
-use App\ReqFilter\Domain\Model\Common\OrderDirection;
-use App\ReqFilter\Domain\Model\Common\Pagination;
-use App\ReqFilter\Domain\Model\Common\Table;
-use App\ReqFilter\Domain\Model\Common\UnionCriteria;
-use App\ReqFilter\Domain\Model\Common\UnionPart;
-use App\ReqFilter\Domain\Model\Conditions\Criterion;
-use App\ReqFilter\Domain\Model\Join\Join;
-use App\ReqFilter\Domain\Model\Join\OnCondition;
-use App\ReqFilter\Infrastructure\Exception\ValidatorException;
 use App\Tests\Fixtures\AppFixtures;
 use Doctrine\Common\DataFixtures\Executor\ORMExecutor;
 use Doctrine\Common\DataFixtures\Loader;
 use Doctrine\Common\DataFixtures\Purger\ORMPurger;
 use Doctrine\ORM\EntityManagerInterface;
+use App\ReqFilter\Contracts\FilterInterface;
+use App\ReqFilter\Domain\Model\Common\ConditionGroup;
+use App\ReqFilter\Domain\Model\Common\FilterDto;
+use App\ReqFilter\Domain\Model\Common\OrderBy;
+use App\ReqFilter\Domain\Model\Common\OrderDirection;
+use App\ReqFilter\Domain\Model\Common\Table;
+use App\ReqFilter\Domain\Model\Common\UnionCriteria;
+use App\ReqFilter\Domain\Model\Common\UnionPart;
+use App\ReqFilter\Domain\Model\Conditions\Criterion;
+use App\ReqFilter\Domain\Model\Join\Join;
+use App\ReqFilter\Infrastructure\Exception\ValidatorException;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
@@ -148,58 +144,68 @@ class ReqFilterTest extends KernelTestCase
         $this->assertContains('User 1', $params);
     }
 
-    public function testAAAInit()
+    public function testFilterWithJoinGeneratesCorrectSql()
     {
-        // assert
+        // Arrange
         $filter = FilterDto::create()
-            ->addCondition(ConditionGroup::and('name', Criterion::in(['Leha','Alisa','Kiril']), Criterion::like('devil')))
-            ->addCondition(ConditionGroup::or(
-                'role',
-                Criterion::eq('admin'),
-                Criterion::eq('user')
-            ))
-            ->setPagination(Pagination::By(limit: 50, offset:  50))
+            ->addCondition(ConditionGroup::and('name', Criterion::in('User 1')))
             ->addJoin(
-                Join::create(Table::is('card','cd'))
+                Join::create(Table::is('users', 'u2')) // Assuming self join or other table for test
                     ->select('name')
                     ->innerJoin()
-                    ->on(OnCondition::eq('list_id',1, LogicOperator::AND))
-                    ->on(OnCondition::eq('list_id',2))
-            )
-            ->setOrderBy(OrderBy::by('name',OrderDirection::DESC));
+                    ->on(ConditionGroup::and('id', Criterion::eq(1)))
+            );
 
+        // Act
+        $this->Filter->initFilter($filter, Table::is('users', 'u'));
+        $sql = $this->Filter->getSql();
+        $params = $this->Filter->getParameter();
 
-        // act
-        $result = $this->Filter->initFilter(criterion: $filter,  table:  Table::is(tableName: 'list', alias: 'l'));
-
-        dump($result->getSql());
-        dump($result->getParameter());
-        $this->assertNotNull($result->getSql());
+        // Assert
+        $this->assertStringContainsString('INNER JOIN users', $sql);
+        $this->assertStringContainsString('ON', $sql);
+        $this->assertNotEmpty($params);
     }
 
-    public function testAAAunion()
+    public function testUnionGeneratesCorrectSql()
     {
-        // assert
-        $filter = UnionPart::create()
-            ->setPart(UnionCriteria::create(Table::is('card','cd'))
-                ->select('title')
+        // Arrange
+        $unionPart = UnionPart::create()
+            ->setPart(UnionCriteria::create(Table::is('users', 'u1'))
+                ->select('name')
                 ->select('id')
                 ->setFilter(FilterDto::create()
-                    ->addCondition(ConditionGroup::and('id', Criterion::in([1,2,3,4,5,6])))))
+                    ->addCondition(ConditionGroup::and('id', Criterion::in(1)))))
             ->setPart(
-                UnionCriteria::create(Table::is('user','u'))
+                UnionCriteria::create(Table::is('users', 'u2'))
                     ->select('name')
                     ->select('id')
                     ->setFilter(FilterDto::create()
-                        ->addCondition(ConditionGroup::or('id', Criterion::in([1,2,3,4,5,6])))
-                        ->setOrderBy(OrderBy::by('name',OrderDirection::DESC)))
+                        ->addCondition(ConditionGroup::and('id', Criterion::in(2)))
+                        ->setOrderBy(OrderBy::by('name', OrderDirection::DESC)))
             );
 
-        // act
-        $result = $this->Filter->union(unionPart: $filter, isAll: true);
+        // Act
+        $result = $this->Filter->union($unionPart, true);
+        $sql = $result->getSql();
 
-        dump($result->getSql());
-        dump($result->getParameter());
-        $this->assertNotNull($result->getSql());
+        // Assert
+        $this->assertStringContainsString('UNION ALL', $sql);
+        $this->assertStringContainsString('SELECT name, id FROM users', $sql);
+    }
+
+    public function testInitFilterThrowsExceptionForAssociativeArrayInCriterion()
+    {
+        // Arrange
+        $filter = FilterDto::create()
+            ->addCondition(ConditionGroup::and('name', Criterion::in(key: 'value')));
+
+        // Assert
+        $this->expectException(ValidatorException::class);
+        $this->expectExceptionMessage('values should be an array list');
+
+        // Act
+        $this->Filter->initFilter($filter, Table::is('users', 'u'));
     }
 }
+

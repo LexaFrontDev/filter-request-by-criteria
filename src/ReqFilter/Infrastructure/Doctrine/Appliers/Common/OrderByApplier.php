@@ -16,3 +16,4 @@ class OrderByApplier implements CriteriaApplierInterface
         return $countWhere;
     }
 }
+

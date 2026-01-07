@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Tests\ReqFilter\Validate\Validators;
+namespace App\Tests\ReqFilter\ReqFilter\Validate\Validators;
+
 
 use App\ReqFilter\Domain\Model\Common\FilterDto;
 use App\ReqFilter\Domain\Model\Common\Table;
 use App\ReqFilter\Domain\Model\Join\Join;
-use App\ReqFilter\Domain\Model\Join\OnCondition;
 use App\ReqFilter\Domain\Validate\Validators\JoinValidator;
 use App\ReqFilter\Infrastructure\Exception\ValidatorException;
 use PHPUnit\Framework\TestCase;
@@ -145,3 +145,5 @@ class JoinValidatorTest extends TestCase
         $this->validator->validate($dto);
     }
 }
+
+

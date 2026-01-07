@@ -2,22 +2,21 @@
 
 namespace App\ReqFilter\Infrastructure\Doctrine\Appliers\Join;
 
+use App\ReqFilter\Domain\Model\Common\ConditionGroup;
 use App\ReqFilter\Domain\Model\Common\FilterDto;
 use App\ReqFilter\Domain\Model\Common\LogicOperator;
 use App\ReqFilter\Domain\Model\Conditions\ComparisonOperator;
+use App\ReqFilter\Domain\Model\Conditions\Criterion;
 use App\ReqFilter\Domain\Model\Join\JoinType;
-use App\ReqFilter\Domain\Model\Join\OnCondition;
 use App\ReqFilter\Infrastructure\Doctrine\Appliers\Contract\CriteriaApplierInterface;
 use Doctrine\DBAL\Query\QueryBuilder;
 
 class JoinApplier implements CriteriaApplierInterface
 {
-
     public function apply(QueryBuilder $qb, string $alias, FilterDto $dto, int $countWhere): int
     {
-        foreach ($dto->getJoins() as $join)
-        {
-            $onExpr = $this->buildOnCondition($qb, $join->getOn(), $join->getTable()->alias);
+        foreach ($dto->getJoins() as $join) {
+            $onExpr = $this->buildOnCondition($qb, $join->getOn(), $join->getTable()->alias, $countWhere);
 
             match ($join->getJoinType()) {
                 JoinType::LEFT->value  => $qb->leftJoin($alias, $join->getTable()->tableName, $join->getTable()->alias, $onExpr),
@@ -29,44 +28,48 @@ class JoinApplier implements CriteriaApplierInterface
             foreach ((array) $join->getSelect() as $field) {
                 $qb->addSelect("{$join->getTable()->alias}.{$field}");
             }
-            $countWhere++;
         }
-
 
         return $countWhere;
     }
 
+    private function buildOnCondition(QueryBuilder $qb, array $groups, string $joinAlias, int &$countWhere): string
+    {
+        if (!$groups) return '1=1';
+        $exprs = [];
 
-    /**
-     * @param QueryBuilder $qb
-     * @param OnCondition[] $conditions
-     * @param string $joinAlias
-     * @return string
-     */
-    private function buildOnCondition(QueryBuilder $qb, array $conditions, string $joinAlias): string {
-        if ($conditions === []) return '1=1';
-        $expr = null;
-        $i = 0;
-        foreach ($conditions as $condition) {
-            $param = sprintf('join_%s_%d', $joinAlias, $i++);
-            $current = match ($condition->operator) {
-                ComparisonOperator::IN,
-                ComparisonOperator::NOT_IN => sprintf('%s.%s %s (:%s)', $joinAlias, $condition->column, $condition->operator->value, $param),
-                default => sprintf('%s.%s %s :%s', $joinAlias, $condition->column, $condition->operator->value, $param),
-            };
+        foreach ($groups as $group) {
+            if (!$group instanceof ConditionGroup || empty($group->conditions)) continue;
 
-            // bind
-            $qb->setParameter($param, $condition->operator === ComparisonOperator::LIKE || $condition->operator === ComparisonOperator::NOT_LIKE ? '%' . $condition->value . '%' : $condition->value);
-
-            if ($expr === null) {
-                $expr = $current;
+            if ($group->logic === LogicOperator::OR && $this->allEqualOperators($group->conditions)) {
+                $param = sprintf('join_%s_%d', $joinAlias, $countWhere++);
+                $values = array_map(fn(Criterion $c) => $c->value, $group->conditions);
+                $qb->setParameter($param, $values);
+                $exprs[] = sprintf('%s.%s IN (:%s)', $joinAlias, $group->column, $param);
                 continue;
             }
 
-            $expr = $condition->logic === LogicOperator::OR ? "($expr OR $current)" : "($expr AND $current)";
+            $parts = [];
+            foreach ($group->conditions as $i => $c) {
+                if (!$c instanceof Criterion) continue;
+                $param = sprintf('join_%s_%d_%d', $joinAlias, $countWhere, $i);
+                $qb->setParameter($param, $c->operator === ComparisonOperator::LIKE || $c->operator === ComparisonOperator::NOT_LIKE ? "%{$c->value}%" : $c->value);
+                $parts[] = sprintf('%s.%s %s :%s', $joinAlias, $group->column, $c->operator->value, $param);
+            }
+            $exprs[] = '(' . implode($group->logic === LogicOperator::OR ? ' OR ' : ' AND ', $parts) . ')';
+            $countWhere++;
         }
 
-        return $expr;
+        return implode(' AND ', $exprs);
     }
 
+    private function allEqualOperators(array $conditions): bool
+    {
+        foreach ($conditions as $c) {
+            if (!$c instanceof Criterion || $c->operator !== ComparisonOperator::EQUAL) return false;
+        }
+        return true;
+    }
 }
+
+

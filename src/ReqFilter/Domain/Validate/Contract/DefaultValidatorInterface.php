@@ -8,3 +8,4 @@ interface DefaultValidatorInterface
 {
     public function validate(FilterDto $dto): bool;
 }
+
